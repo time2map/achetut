@@ -1,0 +1,75 @@
+stages:
+  # - prepare
+  - deploy
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: ''
+  IMAGE_TAG: '$CI_REGISTRY_IMAGE:achetut-expo-$CI_COMMIT_SHORT_SHA'
+  IMAGE_LATEST: '$CI_REGISTRY_IMAGE:latest'
+  BACKEND_URL: 'https://achetut-back.time2map.com'
+# prepare:
+#   stage: prepare
+#   image: node:20-alpine  # Node для npm
+#   script:
+#     - cd mobile && npm ci
+#     - npx expo install --fix
+#   artifacts:
+#     paths:
+#       - mobile/node_modules/
+#     expire_in: 1 hour
+#   cache:
+#     key: ${CI_COMMIT_REF_SLUG}
+#     paths:
+#       - mobile/node_modules/
+#   rules:
+#     - if: $CI_COMMIT_BRANCH == "main"
+
+deploy-main:
+  stage: deploy
+  tags:
+    - achetut-amsterdam
+  variables:
+    EXPO_TOKEN: $EXPO_TOKEN
+    CI: 1
+    EXPOSE_PORTS: '19000 19001 19002 8081'
+    EXPO_WEB_PORT: 8081
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
+  script:
+    - envsubst < .env.example > .env
+    - envsubst '$EXPOSE_PORTS $EXPO_WEB_PORT' < Dockerfile > Dockerfile-filled.yml && mv -f Dockerfile-filled.yml Dockerfile
+    - docker build -t $IMAGE_TAG .
+    - envsubst < docker-compose.yml > docker-compose-filled.yml && mv -f docker-compose-filled.yml docker-compose.yml
+    - docker compose -f docker-compose.yml down
+    - docker compose -f docker-compose.yml up -d
+    - sleep 20
+    - docker compose -f docker-compose.yml logs expo-app_$CI_COMMIT_BRANCH --tail=20
+    - docker compose ps
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+deploy-dev:
+  stage: deploy
+  tags:
+    - achetut-amsterdam
+  variables:
+    EXPO_TOKEN: $EXPO_TOKEN
+    CI: 1
+    X_USER_ID: 'null'
+    EXPOSE_PORTS: '19005 19006 19007 8082'
+    EXPO_WEB_PORT: 8082
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
+  script:
+    - envsubst < .env.example > .env
+    - envsubst '$EXPOSE_PORTS $EXPO_WEB_PORT' < Dockerfile > Dockerfile-filled.yml && mv -f Dockerfile-filled.yml Dockerfile
+    - docker build -t $IMAGE_TAG .
+    - envsubst < docker-compose.yml > docker-compose-filled.yml && mv -f docker-compose-filled.yml docker-compose.yml
+    - docker compose -f docker-compose.yml down
+    - docker compose -f docker-compose.yml up -d
+    - sleep 20
+    - docker compose -f docker-compose.yml logs expo-app_$CI_COMMIT_BRANCH --tail=20
+    - docker compose ps
+  rules:
+    - if: $CI_COMMIT_BRANCH == "dev"
