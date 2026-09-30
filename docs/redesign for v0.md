@@ -106,7 +106,7 @@ Deliver tokens that replace `src/shared/styles/tokens.ts`:
 | Safe areas | Dynamic Island / notch, home indicator | Edge-to-edge, gesture bar |
 | Back | Swipe-down on sheets, back chevron | System back closes sheet levels in order |
 | Typography | Supports Dynamic Type at least to XL without breaking layout | Supports font scale 1.3 |
-| Tablet | iPad is enabled in config (`supportsTablet`) — layout must not break (OQ-D04) | — |
+| Tablet | — | — |
 | Orientation | Portrait only | Portrait only |
 ## Accessibility
 - Tap targets ≥ 44 × 44 pt (iOS) / 48 × 48 dp (Android).
