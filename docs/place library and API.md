@@ -89,3 +89,6 @@ Sources of places, photos, descriptions | Product owner | Pre-built library via 
 Actual format of the JSON; who publishes new cities and how | Product owner + Dev | | Open, blocs release |
 ## Linked issues
 https://github.com/time2map/achetut/issues/6 Backend: create DB for JSON
+
+# Dev Notes 
+[Place for development notes and useful info]
