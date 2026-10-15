@@ -1,14 +1,9 @@
-version: '3.8'
-
 services:
-  expo-app_$CI_COMMIT_BRANCH:
-    image: $IMAGE_TAG
+  web-app:
+    image: ${IMAGE_TAG}
     environment:
-      - NODE_ENV=development
-      - REACT_NATIVE_PACKAGER_HOSTNAME=expo-dev.time2map.com
-      - EXPO_TOKEN=${EXPO_TOKEN}
-    stdin_open: true
-    tty: true
+      NODE_ENV: production
+      WEB_PORT: ${WEB_PORT:-8081}
     network_mode: host
+    restart: unless-stopped
     user: "10002:10002"
-

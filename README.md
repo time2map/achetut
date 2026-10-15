@@ -1,86 +1,62 @@
-# Achetut Mobile (Expo + React Native + TypeScript)
+# Achetut Web
+
+Achetut is a web-only collection of curated city guides presented on an interactive Mapbox map.
 
 ## Stack
 
-- TypeScript
-- Expo SDK 54, React Native 0.81
-- expo-router 6 (routing)
-- Zustand 5 (state store)
-- react-native-maps (Google Maps)
-- expo-location (permission + GPS helper)
-- dotenv (+ app.config.ts -> extra)
-- Babel module-resolver (aliases `@shared/*`, `@features/*`)
-- OpenAI Chat Completions API
+- React 18.3
+- TypeScript 6
+- Vite 7
+- Tailwind CSS 4
+- React Router 7
+- Mapbox GL JS 3 + react-map-gl 8
+- Zustand 5
 
-## Requirements
-
-- Node.js LTS and npm
-- Xcode (for iOS) / Android Studio (for Android)
-- Installed iOS simulator or Android emulator
-- `.env` file inside `mobile/` (already committed) - update the keys if needed:
-  - `GOOGLE_MAPS_API_KEY`
-  - `GOOGLE_MAPS_MAP_ID`
-  - `GPT_API_KEY`
-- Allow the app to access Location Services when prompted (used for initial map centering).
-
-## Getting Started
+## Local development
 
 ```bash
-cd /Users/stelsp/Documents/geosemantica/achetut/ui/mobile
 npm install
+cp .env.example .env
+npm run dev
 ```
 
-Recommended dev build (ensures Google Maps renders correctly):
+Set a public Mapbox token in `.env`:
+
+```dotenv
+VITE_MAPBOX_ACCESS_TOKEN=pk.etc
+VITE_MAPBOX_STYLE=mapbox://styles/mapbox/standard
+```
+
+The previous `EXPO_PUBLIC_MAPBOX_*` names are temporarily supported so existing local environments continue to work.
+
+## Routes
+
+- `/design-1` — collapsible-panel concept
+- `/design-1/cities` — city overview
+- `/design-1/:cityId` — city guide
+- `/design-1/:cityId/:placeId` — place detail
+- `/design-2` — permanent-sidebar concept
+- `/design-2/:cityId` — city guide
+- `/design-2/:cityId/:placeId` — selected place and map popup
+
+## Checks
 
 ```bash
-npx expo run:ios     # iOS simulator
-npx expo run:android # Android emulator
+npm run typecheck
+npm run build
+npm run preview
 ```
 
-Quick start (maps might fail to render on first boot):
+Vite outputs the production application to `dist/`.
 
-```bash
-npm run ios   # or npm run android
-```
-
-After editing Babel config or aliases:
-
-```bash
-npm start -c
-```
-
-## Project Structure
+## Source structure
 
 ```text
-mobile/
-  app/
-    _layout.tsx            # shared layout + footer tab switcher
-    index.tsx              # main screen (map + side panel)
-  app.config.ts            # ENV -> extra + Google Maps config (iOS/Android)
-  babel.config.js          # @shared/* and @features/* aliases
-  tsconfig.json            # baseUrl + paths for aliases
-  src/
-    features/
-      map/
-        screens/MapScreen.tsx
-        constants.ts
-        styles.ts
-        config/prompt.ts        # system prompt for GPT descriptions
-        hooks/*                 # selection logic and data fetching
-    shared/
-      api/openai.ts            # OpenAI Chat Completions client
-      config/env.ts            # env access (extra)
-      types/chat.ts            # ChatMessage types
-      ui/*                     # reusable UI components
+src/
+  App.tsx                    # React Router routes
+  main.tsx                   # browser entry point
+  features/web-map/          # two map interface concepts
+  shared/config/env.ts       # Vite environment adapter
+  styles/index.css           # Tailwind and global document styles
+  top/                       # curated city and place data
 ```
-
-## Modules and Shared Code
-
-- MAP: single screen with Google Maps, point/POI selection, metadata panel (coordinates, address, Google Places / Street View photos, GPT description).
-- Shared (`src/shared/*`):
-  - `api/` - API clients (for example, `openai.ts`)
-  - `config/` - environment adapters (`env.ts` pulls keys from `extra`)
-  - `types/` - shared types such as `ChatMessage`
-  - `ui/` - reusable UI components
-
-For additional routing/feature guidance see `docs/DEV_GUIDE.md`.

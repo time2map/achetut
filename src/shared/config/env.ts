@@ -1,13 +1,6 @@
-import Constants from "expo-constants";
-
-type Extra = {
-  ACHETUT_BACK_URL?: string;
-  X_USER_ID?: string;
-};
-
-const extra = (Constants?.expoConfig?.extra ?? {}) as Extra;
-
 export const env = {
-  achetutBackUrl: extra.ACHETUT_BACK_URL,
-  xUserId: extra.X_USER_ID,
+  achetutBackUrl: import.meta.env.VITE_ACHETUT_BACK_URL,
+  xUserId: import.meta.env.VITE_X_USER_ID,
+  mapboxAccessToken: import.meta.env.VITE_MAPBOX_ACCESS_TOKEN ?? import.meta.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN ?? "",
+  mapboxStyle: import.meta.env.VITE_MAPBOX_STYLE ?? import.meta.env.EXPO_PUBLIC_MAPBOX_STYLE ?? "mapbox://styles/mapbox/standard",
 } as const;

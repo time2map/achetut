@@ -1,23 +1,26 @@
-FROM gitlab.geosemantica.ru:5050/achetut/ui/node:20-alpine
+FROM node:20-alpine
 
-# Нет global! Всё local.
 WORKDIR /app
 
-# Копируем и install (под root, но chown после)
 COPY package*.json ./
-RUN npm ci --only=production=false  # ci для lockfile, full deps
-RUN npx expo install --fix  # Фиксит Expo mismatches
+RUN npm ci
 
 COPY . .
+ARG VITE_MAPBOX_ACCESS_TOKEN
+ARG VITE_MAPBOX_STYLE=mapbox://styles/mapbox/standard
+ENV VITE_MAPBOX_ACCESS_TOKEN=${VITE_MAPBOX_ACCESS_TOKEN}
+ENV VITE_MAPBOX_STYLE=${VITE_MAPBOX_STYLE}
+RUN npm run build
 
-# Non-root с uid
 ARG USER_ID=10002
 ARG GROUP_ID=10002
 RUN addgroup -g ${GROUP_ID} -S nodejs && \
-    adduser -S nodeuser -u ${USER_ID} -G nodejs
-RUN chown -R nodeuser:nodejs /app  # Всё /app теперь non-root (включая node_modules после install)
+    adduser -S nodeuser -u ${USER_ID} -G nodejs && \
+    chown -R nodeuser:nodejs /app
+
 USER nodeuser
 
-EXPOSE $EXPOSE_PORTS
+ENV WEB_PORT=8081
+EXPOSE 8081
 
-CMD sh -c "echo $EXPO_TOKEN | npx expo login --non-interactive && npx expo start --tunnel --port $EXPO_WEB_PORT --clear"
+CMD ["sh", "-c", "npm run preview -- --host 0.0.0.0 --port ${WEB_PORT}"]

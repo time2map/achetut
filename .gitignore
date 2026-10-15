@@ -4,23 +4,11 @@
 # dependencies
 node_modules/
 
-# Expo
-.expo/
+# build
 dist/
-web-build/
-expo-env.d.ts
 
-# Native
-.kotlin/
-*.orig.*
-*.jks
-*.p8
-*.p12
-*.key
-*.mobileprovision
-
-# Metro
-.metro-health-check*
+# legacy local tool cache (not used by the Vite app)
+.expo/
 
 # debug
 npm-debug.*
@@ -37,7 +25,3 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
-
-# generated native folders
-/ios
-/android

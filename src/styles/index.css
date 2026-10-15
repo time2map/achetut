@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+html,
+body,
+#root {
+  width: 100%;
+  min-width: 320px;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+}
+
+.route-loading {
+  display: grid;
+  width: 100%;
+  height: 100dvh;
+  place-content: center;
+  gap: 12px;
+  background: #f7f4ee;
+  color: #302b27;
+  font: 600 14px/1.4 system-ui, sans-serif;
+}
+
+.route-loading span {
+  width: 28px;
+  height: 28px;
+  margin: 0 auto;
+  border: 2px solid #d7d0c6;
+  border-top-color: #302b27;
+  border-radius: 999px;
+  animation: route-loading-spin .8s linear infinite;
+}
+
+@keyframes route-loading-spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .route-loading span { animation: none; }
+}
