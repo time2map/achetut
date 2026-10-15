@@ -134,6 +134,23 @@ function V2Image({
   );
 }
 
+function PhotoCredit({ photo }: { photo: PlacePhoto }) {
+  return (
+    <span className="v2-photo-credit" onClick={(event) => event.stopPropagation()}>
+      Photo{' '}
+      <a href={photo.page} target="_blank" rel="noreferrer">{photo.author || 'Unknown author'}</a>
+      {photo.license ? (
+        <>
+          {' · '}
+          {photo.licenseUrl
+            ? <a href={photo.licenseUrl} target="_blank" rel="noreferrer">{photo.license}</a>
+            : photo.license}
+        </>
+      ) : null}
+    </span>
+  );
+}
+
 function PlaceListSkeleton({ count = 8 }: { count?: number }) {
   return (
     <div className="v2-results-skeleton" aria-hidden="true">
@@ -323,10 +340,7 @@ function PhotoLightbox({ place, city, initialIndex = 0, onClose }: { place: Cura
             {CATEGORY_META[place.category].label} · {city.name}
           </span>
           <strong id="v2-lightbox-title">{place.title}</strong>
-          <span className="v2-lightbox-credit">
-            Photo by {photo.author || 'unknown author'}
-            {photo.license ? <> · {photo.licenseUrl ? <a href={photo.licenseUrl} target="_blank" rel="noreferrer">{photo.license}</a> : photo.license}</> : null}
-          </span>
+          <PhotoCredit photo={photo} />
           {photo.page ? (
             <a className="v2-lightbox-link" href={photo.page} target="_blank" rel="noreferrer">
               Wikimedia Commons <Icon name="external" />
@@ -438,10 +452,20 @@ function CitySelect({ city, onSelect, onOpen, forceOpen = false, forceLoading = 
     return () => document.removeEventListener('pointerdown', onPointerDown);
   }, [forceLoading, forceOpen, isOpen]);
 
+  const scrollOptionIntoMenu = (index: number) => {
+    const menu = listRef.current;
+    const option = menu?.querySelectorAll<HTMLElement>(':scope > li')[index];
+    if (!menu || !option) return;
+    const top = option.offsetTop;
+    const bottom = top + option.offsetHeight;
+    if (top < menu.scrollTop) menu.scrollTop = top;
+    else if (bottom > menu.scrollTop + menu.clientHeight) menu.scrollTop = bottom - menu.clientHeight;
+  };
+
   useEffect(() => {
-    if (!isOpen) return;
-    document.getElementById(`v2-city-option-${CITIES[activeIndex]?.id}`)?.scrollIntoView({ block: 'nearest' });
-  }, [activeIndex, isOpen]);
+    if (!isOpen || !menuReady) return;
+    scrollOptionIntoMenu(selectedIndex);
+  }, [isOpen, menuReady, selectedIndex]);
 
   const onTriggerKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>) => {
     if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(event.key)) {
@@ -452,10 +476,14 @@ function CitySelect({ city, onSelect, onOpen, forceOpen = false, forceLoading = 
 
   const onListKeyDown = (event: ReactKeyboardEvent<HTMLUListElement>) => {
     const last = CITIES.length - 1;
-    if (event.key === 'ArrowDown') { event.preventDefault(); setActiveIndex((index) => Math.min(last, index + 1)); return; }
-    if (event.key === 'ArrowUp') { event.preventDefault(); setActiveIndex((index) => Math.max(0, index - 1)); return; }
-    if (event.key === 'Home') { event.preventDefault(); setActiveIndex(0); return; }
-    if (event.key === 'End') { event.preventDefault(); setActiveIndex(last); return; }
+    const moveActive = (index: number) => {
+      setActiveIndex(index);
+      scrollOptionIntoMenu(index);
+    };
+    if (event.key === 'ArrowDown') { event.preventDefault(); moveActive(Math.min(last, activeIndex + 1)); return; }
+    if (event.key === 'ArrowUp') { event.preventDefault(); moveActive(Math.max(0, activeIndex - 1)); return; }
+    if (event.key === 'Home') { event.preventDefault(); moveActive(0); return; }
+    if (event.key === 'End') { event.preventDefault(); moveActive(last); return; }
     if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); choose(activeIndex); return; }
     if (event.key === 'Escape') { event.preventDefault(); close(); return; }
     if (event.key === 'Tab') { setIsOpen(false); return; }
@@ -464,7 +492,7 @@ function CitySelect({ city, onSelect, onOpen, forceOpen = false, forceLoading = 
       const start = activeIndex + 1;
       const ordered = [...CITIES.slice(start), ...CITIES.slice(0, start)];
       const match = ordered.find((item) => item.name.toLocaleLowerCase().startsWith(letter));
-      if (match) setActiveIndex(CITIES.indexOf(match));
+      if (match) moveActive(CITIES.indexOf(match));
     }
   };
 
@@ -488,6 +516,7 @@ function CitySelect({ city, onSelect, onOpen, forceOpen = false, forceLoading = 
         </span>
         <Icon name="chevron-down" />
       </button>
+      {city.cover ? <PhotoCredit photo={city.cover} /> : null}
 
       {isOpen && (
         <ul
@@ -516,6 +545,7 @@ function CitySelect({ city, onSelect, onOpen, forceOpen = false, forceLoading = 
                 <span className="v2-city-option-copy">
                   <strong>{item.name}</strong>
                   <small>{item.country}</small>
+                  {item.cover ? <PhotoCredit photo={item.cover} /> : null}
                 </span>
                 <span className="v2-city-option-count" aria-label={`${item.places.length} places`}>{item.places.length}</span>
                 <span className="v2-city-option-check">{isSelected ? <Icon name="check" /> : null}</span>
@@ -819,7 +849,10 @@ function V2PlaceMarker({
       type="button"
       className={`v2-pin${selected ? ' is-selected' : ''}${highlighted ? ' is-highlighted' : ''}`}
       style={{ '--pin-color': category.color } as React.CSSProperties}
-      aria-label={`${place.title}, ${category.label}`}
+      aria-label={place.photo
+        ? `${place.title}, ${category.label}. Photo by ${place.photo.author || 'unknown author'}${place.photo.license ? `, ${place.photo.license}` : ''}`
+        : `${place.title}, ${category.label}`}
+      title={place.photo ? `Photo ${place.photo.author || 'Unknown author'}${place.photo.license ? ` · ${place.photo.license}` : ''}` : undefined}
       aria-pressed={selected}
       onClick={(event) => { event.stopPropagation(); onSelect(); }}
       onMouseEnter={() => onHoverChange(true)}
@@ -876,6 +909,7 @@ function HoverPreview({ place }: { place: CuratedPlace }) {
         <small><i style={{ backgroundColor: category.color }} />{category.label}</small>
         <strong>{place.title}</strong>
         {meta ? <span>{meta}</span> : null}
+        {place.photo && !photoFailed ? <PhotoCredit photo={place.photo} /> : null}
       </span>
     </div>
   );
@@ -1109,18 +1143,7 @@ function PlaceDetail({
         ) : null}
 
         {showPhoto && photo ? (
-          <p className="v2-detail-credit">
-            Photo{' '}
-            <a href={photo.page} target="_blank" rel="noreferrer">{photo.author || 'Wikimedia Commons'}</a>
-            {photo.license ? (
-              <>
-                {' · '}
-                {photo.licenseUrl
-                  ? <a href={photo.licenseUrl} target="_blank" rel="noreferrer">{photo.license}</a>
-                  : photo.license}
-              </>
-            ) : null}
-          </p>
+          <p className="v2-detail-credit"><PhotoCredit photo={photo} /></p>
         ) : null}
 
         <div className="v2-detail-body">
@@ -1228,6 +1251,7 @@ export function DesignTwoMapScreen() {
   const previewOnHover = useCallback((placeId: string, hovered: boolean) => {
     if (hovered && !window.matchMedia(HOVER_PREVIEW_QUERY).matches) return;
     setPreviewPlaceId((current) => (hovered ? placeId : current === placeId ? null : current));
+    setHighlightedPlaceId((current) => (hovered ? placeId : current === placeId ? null : current));
   }, []);
 
   const activeCity = CITY_BY_ID[activeCityId] ?? CITY_BY_ID[DEFAULT_CITY_ID];
@@ -1630,7 +1654,7 @@ export function DesignTwoMapScreen() {
                 <V2PlaceMarker
                   place={place}
                   selected={selectedPlaceId === place.id}
-                  highlighted={highlightedPlaceId === place.id}
+                  highlighted={highlightedPlaceId === place.id || previewPlaceId === place.id}
                   onSelect={() => selectPlace(place)}
                   onHoverChange={(hovered) => previewOnHover(place.id, hovered)}
                 />
@@ -1802,9 +1826,9 @@ export function DesignTwoMapScreen() {
               <article
                 key={place.id}
                 id={`v2-place-${place.id}`}
-                className="v2-place-row"
+                className={`v2-place-row${highlightedPlaceId === place.id || previewPlaceId === place.id ? ' is-highlighted' : ''}`}
                 onMouseEnter={() => setHighlightedPlaceId(place.id)}
-                onMouseLeave={() => setHighlightedPlaceId((current) => (current === place.id ? null : current))}
+                onMouseLeave={() => setHighlightedPlaceId((current) => (current === place.id && previewPlaceId !== place.id ? null : current))}
               >
                 <span className={`v2-place-thumb tone-${place.placeholderTone}`} aria-hidden="true">
                   {place.photo ? <V2Image src={place.photo.thumb} /> : null}
@@ -1816,6 +1840,7 @@ export function DesignTwoMapScreen() {
                     <strong title={place.title}>{place.title}</strong>
                   </button>
                   <span className="v2-place-description" title={place.why}>{place.why}</span>
+                  {place.photo ? <PhotoCredit photo={place.photo} /> : null}
                   {sourceCount > 0 ? (
                     <span className="v2-place-sources">
                       {sourceCount} {sourceCount === 1 ? 'source' : 'sources'}

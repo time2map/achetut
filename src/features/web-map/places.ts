@@ -234,6 +234,15 @@ function adaptPlace(place: TopPlace, citySources: Record<string, TopSource>, ind
   };
 }
 
+function coverFromPlaces(file: string, places: CuratedPlace[]): PlacePhoto | undefined {
+  const key = file.replace(/ /g, '_').toLocaleLowerCase();
+  for (const place of places) {
+    const match = place.photos.find((photo) => decodeURIComponent(photo.page).replace(/ /g, '_').toLocaleLowerCase().includes(key));
+    if (match) return match;
+  }
+  return undefined;
+}
+
 function adaptCity(file: TopCityFile): CuratedCity {
   const places = file.places
     .map((place, index) => adaptPlace(place, file.sources, index))
@@ -248,7 +257,7 @@ function adaptCity(file: TopCityFile): CuratedCity {
     country: CITY_COUNTRY[file.id] ?? 'Europe',
     updated: file.updated,
     center: [median(lngs), median(lats)],
-    cover: file.cover ? commonsCover(file.cover) : undefined,
+    cover: file.cover ? coverFromPlaces(file.cover, places) ?? commonsCover(file.cover) : undefined,
     places,
     art: CITY_ART[file.id] ?? '#d98c62'
   };
