@@ -279,7 +279,7 @@ function PlaceVisual({
     return (
       <button className={`place-visual detail-visual tone-${place.placeholderTone}`} type="button" onClick={onOpen} aria-label={`Open photo ${photoIndex + 1} of ${photoCount} of ${place.title} full screen`}>
         {content}
-        <span className="photo-expand-label">{photoCount > 1 ? `${photoIndex + 1} / ${photoCount} · View photos` : 'View photo'}</span>
+        <span className="photo-expand-label">{photoCount > 1 ? `${photoIndex + 1} / ${photoCount} — View photos` : 'View photo'}</span>
       </button>
     );
   }
@@ -715,7 +715,7 @@ export function DesktopMapScreen({ routeBase: routeBaseProp = '' }: DesktopMapSc
           <button type="button" onClick={() => window.location.reload()}>Retry</button>
         </div>
       )}
-      {!isOnline && <div className="offline-banner" role="status">You are offline · showing saved content</div>}
+      {!isOnline && <div className="offline-banner" role="status">You are offline — showing saved content</div>}
 
       <aside
         className={`places-panel ${isPanelOpen ? 'is-open' : 'is-closed'}`}
@@ -786,7 +786,7 @@ export function DesktopMapScreen({ routeBase: routeBaseProp = '' }: DesktopMapSc
                       <span className="city-guide-copy">
                         <span className="city-guide-kicker"><i /> Available now</span>
                         <strong>{city.name}</strong>
-                        <span>{city.country} · {city.places.length} curated places</span>
+                        <span>{city.country}, {city.places.length} curated places</span>
                         <small>Architecture, gardens and city stories</small>
                       </span>
                       <span className="city-guide-arrow" aria-hidden="true"><Icon name="chevron-right" /></span>
@@ -913,7 +913,7 @@ export function DesktopMapScreen({ routeBase: routeBaseProp = '' }: DesktopMapSc
                             {CATEGORY_META[place.category].label}
                           </span>
                           <strong>{place.title}</strong>
-                          <span className="place-meta">{[place.architect, place.year, place.area].filter(Boolean).join(' · ')}</span>
+                          <span className="place-meta">{[place.architect, place.year, place.area].filter(Boolean).join(', ')}</span>
                           <span className="place-why">{place.why}</span>
                         </span>
                         <span className="card-arrow" aria-hidden="true"><Icon name="chevron-right" /></span>
@@ -965,7 +965,7 @@ export function DesktopMapScreen({ routeBase: routeBaseProp = '' }: DesktopMapSc
               {selectedPhoto && (
                 <p className="photo-credit">
                   Photo: <a href={selectedPhoto.page} target="_blank" rel="noreferrer">{selectedPhoto.author}</a>
-                  {' · '}
+                  {', '}
                   <a href={selectedPhoto.licenseUrl} target="_blank" rel="noreferrer">{selectedPhoto.license}</a>
                 </p>
               )}
@@ -1022,7 +1022,7 @@ export function DesktopMapScreen({ routeBase: routeBaseProp = '' }: DesktopMapSc
             <h2 id="about-title">Good places, with a reason to go.</h2>
             <p>Achetut gathers architecture, public space and unusual city stories into one concise map. Every place is researched and prepared in advance — nothing here is generated on demand.</p>
             <div className="about-links"><a href="mailto:feedback@time2map.com">Send feedback</a><a href="/privacy">Privacy policy</a><a href="#credits">Photo credits & sources</a></div>
-            <small>Version 1.0 · Map data © OpenStreetMap contributors</small>
+            <small>Version 1.0 — Map data © OpenStreetMap contributors</small>
           </section>
         </div>
       )}
@@ -1055,8 +1055,8 @@ export function DesktopMapScreen({ routeBase: routeBaseProp = '' }: DesktopMapSc
               </div>
             )}
             <p>
-              {selectedPhotos.length > 1 && <span aria-live="polite">{photoIndex + 1} / {selectedPhotos.length} · </span>}
-              {selectedPlace.title} · {selectedPhoto.author} · {selectedPhoto.license}
+              {selectedPhotos.length > 1 && <span aria-live="polite">{photoIndex + 1} / {selectedPhotos.length} — </span>}
+              {selectedPlace.title} — {selectedPhoto.author} — {selectedPhoto.license}
             </p>
           </div>
         </div>

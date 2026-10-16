@@ -43,6 +43,8 @@ type IconName = 'arrow-left' | 'arrow-up-right' | 'check' | 'chevron-down' | 'ch
 
 const SHORTCUT_MODIFIER = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl';
 const LIGHTBOX_WIDTH = 1920;
+// Temporarily hidden after the product review. Keep the implementation ready to restore.
+const SHOW_SEARCH = false;
 
 const FILTERS: { value: CategoryFilter; label: string }[] = [
   { value: 'all', label: 'All' },
@@ -51,12 +53,6 @@ const FILTERS: { value: CategoryFilter; label: string }[] = [
   { value: 'housing', label: 'Housing' },
   { value: 'parks', label: 'Parks' },
   { value: 'unusual', label: 'Unusual' }
-];
-
-const MENTION_FILTERS = [
-  { value: 1, label: 'Any' },
-  { value: 2, label: '2+' },
-  { value: 3, label: '3+' }
 ];
 
 function Icon({ name }: { name: IconName }) {
@@ -141,7 +137,7 @@ function PhotoCredit({ photo }: { photo: PlacePhoto }) {
       <a href={photo.page} target="_blank" rel="noreferrer">{photo.author || 'Unknown author'}</a>
       {photo.license ? (
         <>
-          {' · '}
+          {', '}
           {photo.licenseUrl
             ? <a href={photo.licenseUrl} target="_blank" rel="noreferrer">{photo.license}</a>
             : photo.license}
@@ -200,6 +196,13 @@ function uniqueSources(sources: PlaceSource[]) {
 function largePhotoUrl(photo: PlacePhoto) {
   const file = photo.page.split('/wiki/File:')[1];
   return file ? `https://commons.wikimedia.org/wiki/Special:FilePath/${file}?width=${LIGHTBOX_WIDTH}` : null;
+}
+
+// List thumbs are about 128px. A large file scaled into that box looks noisy.
+// 250px is the next smaller width Wikimedia actually serves.
+function listPhotoUrl(photo: PlacePhoto) {
+  const source = photo.src || photo.thumb;
+  return source.replace(/\/\d+px-([^/?#]+)$/, '/250px-$1');
 }
 
 function PhotoLightbox({ place, city, initialIndex = 0, onClose }: { place: CuratedPlace; city: CuratedCity; initialIndex?: number; onClose: () => void }) {
@@ -337,7 +340,7 @@ function PhotoLightbox({ place, city, initialIndex = 0, onClose }: { place: Cura
         <figcaption>
           <span className="v2-lightbox-kicker">
             <i style={{ backgroundColor: CATEGORY_META[place.category].color }} />
-            {CATEGORY_META[place.category].label} · {city.name}
+            {CATEGORY_META[place.category].label} — {city.name}
           </span>
           <strong id="v2-lightbox-title">{place.title}</strong>
           <PhotoCredit photo={photo} />
@@ -366,7 +369,7 @@ function CityThumb({ city }: { city: CuratedCity }) {
   );
 }
 
-function CitySelect({ city, onSelect, onOpen, forceOpen = false, forceLoading = false }: { city: CuratedCity; onSelect: (cityId: string) => void; onOpen?: () => void; forceOpen?: boolean; forceLoading?: boolean }) {
+function CitySelect({ city, onSelect, onOpen, pending = false, forceOpen = false, forceLoading = false }: { city: CuratedCity; onSelect: (cityId: string) => void; onOpen?: () => void; pending?: boolean; forceOpen?: boolean; forceLoading?: boolean }) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const listRef = useRef<HTMLUListElement | null>(null);
@@ -501,22 +504,36 @@ function CitySelect({ city, onSelect, onOpen, forceOpen = false, forceLoading = 
       <span className="v2-visually-hidden" id="v2-city-select-label">City</span>
       <button
         ref={triggerRef}
-        className="v2-city-trigger"
+        className={`v2-city-trigger${pending ? ' is-pending' : ''}`}
         type="button"
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        aria-labelledby="v2-city-select-label v2-city-select-value"
+        aria-busy={pending}
+        aria-labelledby={pending ? undefined : 'v2-city-select-label v2-city-select-value'}
+        aria-label={pending ? 'Loading city' : undefined}
         onClick={() => (isOpen ? close(false) : open())}
         onKeyDown={onTriggerKeyDown}
       >
-        <CityThumb city={city} />
+        {pending ? (
+          <span className="v2-city-thumb" aria-hidden="true"><span className="v2-skeleton" /></span>
+        ) : (
+          <CityThumb city={city} />
+        )}
         <span className="v2-city-trigger-copy" id="v2-city-select-value">
-          <small>{city.country} · {city.places.length} places</small>
-          <strong>{city.name}</strong>
+          {pending ? (
+            <>
+              <span className="v2-skel-line is-meta" />
+              <span className="v2-skel-line is-title" />
+            </>
+          ) : (
+            <>
+              <small>{city.country}, {city.places.length} places</small>
+              <strong>{city.name}</strong>
+            </>
+          )}
         </span>
         <Icon name="chevron-down" />
       </button>
-      {city.cover ? <PhotoCredit photo={city.cover} /> : null}
 
       {isOpen && (
         <ul
@@ -545,7 +562,6 @@ function CitySelect({ city, onSelect, onOpen, forceOpen = false, forceLoading = 
                 <span className="v2-city-option-copy">
                   <strong>{item.name}</strong>
                   <small>{item.country}</small>
-                  {item.cover ? <PhotoCredit photo={item.cover} /> : null}
                 </span>
                 <span className="v2-city-option-count" aria-label={`${item.places.length} places`}>{item.places.length}</span>
                 <span className="v2-city-option-check">{isSelected ? <Icon name="check" /> : null}</span>
@@ -852,7 +868,7 @@ function V2PlaceMarker({
       aria-label={place.photo
         ? `${place.title}, ${category.label}. Photo by ${place.photo.author || 'unknown author'}${place.photo.license ? `, ${place.photo.license}` : ''}`
         : `${place.title}, ${category.label}`}
-      title={place.photo ? `Photo ${place.photo.author || 'Unknown author'}${place.photo.license ? ` · ${place.photo.license}` : ''}` : undefined}
+      title={place.photo ? `Photo ${place.photo.author || 'Unknown author'}${place.photo.license ? `, ${place.photo.license}` : ''}` : undefined}
       aria-pressed={selected}
       onClick={(event) => { event.stopPropagation(); onSelect(); }}
       onMouseEnter={() => onHoverChange(true)}
@@ -897,7 +913,7 @@ function PopupPlaceholder({ place, city }: { place: CuratedPlace; city: CuratedC
 function HoverPreview({ place }: { place: CuratedPlace }) {
   const [photoFailed, setPhotoFailed] = useState(false);
   const category = CATEGORY_META[place.category];
-  const meta = [place.architect, place.year].filter(Boolean).join(' · ');
+  const meta = [place.architect, place.year].filter(Boolean).join(', ');
   return (
     <div className="v2-hover-card">
       <span className={`v2-hover-thumb tone-${place.placeholderTone}`} aria-hidden="true">
@@ -918,13 +934,11 @@ function HoverPreview({ place }: { place: CuratedPlace }) {
 function PlaceDetail({
   place,
   city,
-  rank,
   onBack,
   onOpenPhoto
 }: {
   place: CuratedPlace;
   city: CuratedCity;
-  rank: number;
   onBack: () => void;
   onOpenPhoto: (index: number) => void;
 }) {
@@ -1150,7 +1164,6 @@ function PlaceDetail({
           <div className="v2-popup-kicker">
             <i style={{ backgroundColor: category.color }} />
             {category.label}
-            <span className="v2-detail-rank">No. {String(rank).padStart(2, '0')}</span>
           </div>
           <h2 id="v2-detail-title">{place.title}</h2>
           {(place.architect || place.year || place.area) ? (
@@ -1210,7 +1223,6 @@ export function DesignTwoMapScreen() {
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(initialRoute.placeId);
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all');
   const [query, setQuery] = useState('');
-  const [minMentions, setMinMentions] = useState(1);
   const [mapReady, setMapReady] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState(true);
@@ -1260,21 +1272,16 @@ export function DesignTwoMapScreen() {
     () => FILTERS.filter((filter) => filter.value === 'all' || places.some((place) => place.category === filter.value)),
     [places]
   );
-  const mentionsById = useMemo(
-    () => new globalThis.Map(places.map((place) => [place.id, uniqueSources(place.sources).length])),
-    [places]
-  );
   const visiblePlaces = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase();
     return places.filter((place) => {
       const matchesCategory = activeCategory === 'all' || place.category === activeCategory;
-      const matchesMentions = (mentionsById.get(place.id) ?? 0) >= minMentions;
       const matchesQuery = !normalizedQuery || [place.title, place.architect, place.area, place.year]
         .filter(Boolean)
         .some((value) => value?.toLocaleLowerCase().includes(normalizedQuery));
-      return matchesCategory && matchesMentions && matchesQuery;
+      return matchesCategory && matchesQuery;
     });
-  }, [activeCategory, mentionsById, minMentions, places, query]);
+  }, [activeCategory, places, query]);
   const selectedPlace = useMemo(
     () => places.find((place) => place.id === selectedPlaceId) ?? null,
     [places, selectedPlaceId]
@@ -1318,7 +1325,6 @@ export function DesignTwoMapScreen() {
       setActiveCityId(city.id);
       setSelectedPlaceId(null);
       setActiveCategory('all');
-      setMinMentions(1);
       setQuery('');
     });
     const method = replaceHistory ? 'replaceState' : 'pushState';
@@ -1340,7 +1346,6 @@ export function DesignTwoMapScreen() {
         setActiveCityId(route.cityId);
         setSelectedPlaceId(route.placeId);
         setActiveCategory('all');
-        setMinMentions(1);
         setQuery('');
       });
       setCurrentZoom(route.placeId && buildings3dRef.current ? PLACE_3D_ZOOM : CITY_ZOOM);
@@ -1382,6 +1387,7 @@ export function DesignTwoMapScreen() {
   }, []);
 
   useEffect(() => {
+    if (!SHOW_SEARCH) return;
     const focusSearch = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();
@@ -1547,12 +1553,8 @@ export function DesignTwoMapScreen() {
     resetSelectionRoute();
   };
 
-  const changeMentions = (value: number) => {
-    setMinMentions(value);
-    resetSelectionRoute();
-  };
-
   const freezeList = previewLoading && (loadingMode === 'list' || loadingMode === 'cities' || (loadingMode === 'all' && !selectedPlaceId));
+  const cityPending = isCityPending || freezeList;
   const detailPlace = selectedPlace ?? (loadingMode === 'photos' ? places[0] ?? null : null);
 
   if (!activeCity) {
@@ -1701,7 +1703,6 @@ export function DesignTwoMapScreen() {
             key={detailPlace.id}
             place={detailPlace}
             city={activeCity}
-            rank={places.indexOf(detailPlace) + 1}
             onBack={() => clearSelection()}
             onOpenPhoto={(index) => setLightbox({ place: detailPlace, index })}
           />
@@ -1715,98 +1716,105 @@ export function DesignTwoMapScreen() {
 
           <CitySelect
             city={activeCity}
+            pending={cityPending}
             onSelect={selectCity}
             onOpen={() => { if (isMobileSheet && sheetLevel === 'peek') changeSheetLevel('half'); }}
             forceOpen={loadingMode === 'cities'}
             forceLoading={previewLoading}
           />
 
-          <button className="v2-sheet-search" type="button" onClick={openMobileSearch} aria-label="Search places">
-            <Icon name="search" />
-          </button>
+          {SHOW_SEARCH ? (
+            <button className="v2-sheet-search" type="button" onClick={openMobileSearch} aria-label="Search places">
+              <Icon name="search" />
+            </button>
+          ) : null}
 
-          <div className="v2-title-row">
+          <div className={`v2-title-row${cityPending ? ' is-pending' : ''}`}>
             <div>
-              <p>{activeCity.country}</p>
-              <h1>Places worth noticing</h1>
+              {cityPending ? (
+                <>
+                  <span className="v2-skel-line is-kicker" />
+                  <span className="v2-skel-line is-title" />
+                </>
+              ) : (
+                <>
+                  <p>{activeCity.country}</p>
+                  <h1>Places worth noticing</h1>
+                </>
+              )}
             </div>
-            <strong aria-label={`${visiblePlaces.length} places shown`}>{visiblePlaces.length}</strong>
+            <output
+              className="v2-place-count"
+              role="status"
+              aria-atomic="true"
+              aria-label={cityPending ? 'Loading places' : `${visiblePlaces.length} places shown`}
+            >
+              {cityPending
+                ? <span className="v2-skel-line is-count" />
+                : <strong aria-hidden="true">{visiblePlaces.length}</strong>}
+            </output>
           </div>
 
-          <div
-            className={`v2-search${query ? ' has-value' : ''}`}
-            onMouseDown={(event) => {
-              if (event.target === event.currentTarget || (event.target as Element).closest('svg, kbd')) {
-                event.preventDefault();
-                searchRef.current?.focus();
-              }
-            }}
-          >
-            <label htmlFor="v2-search-input" className="v2-visually-hidden">Search places</label>
-            <Icon name="search" />
-            <input
-              id="v2-search-input"
-              ref={searchRef}
-              type="search"
-              value={query}
-              onChange={(event) => {
-                setQuery(event.target.value);
-                if (selectedPlaceId) clearSelection(true);
-              }}
-              onKeyDown={(event) => {
-                if (event.key === 'Escape' && query) {
+          {SHOW_SEARCH ? (
+            <div
+              className={`v2-search${query ? ' has-value' : ''}`}
+              onMouseDown={(event) => {
+                if (event.target === event.currentTarget || (event.target as Element).closest('svg, kbd')) {
                   event.preventDefault();
-                  setQuery('');
+                  searchRef.current?.focus();
                 }
               }}
-              placeholder="Search a place or architect"
-              autoComplete="off"
-              spellCheck={false}
-            />
-            {query ? (
-              <button
-                className="v2-search-clear"
-                type="button"
-                onClick={() => { setQuery(''); searchRef.current?.focus(); }}
-                aria-label="Clear search"
-              >
-                <Icon name="close" />
-              </button>
-            ) : (
-              <kbd aria-hidden="true"><span>{SHORTCUT_MODIFIER}</span><span>K</span></kbd>
-            )}
-          </div>
+            >
+              <label htmlFor="v2-search-input" className="v2-visually-hidden">Search places</label>
+              <Icon name="search" />
+              <input
+                id="v2-search-input"
+                ref={searchRef}
+                type="search"
+                value={query}
+                onChange={(event) => {
+                  setQuery(event.target.value);
+                  if (selectedPlaceId) clearSelection(true);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Escape' && query) {
+                    event.preventDefault();
+                    setQuery('');
+                  }
+                }}
+                placeholder="Search a place or architect"
+                autoComplete="off"
+                spellCheck={false}
+              />
+              {query ? (
+                <button
+                  className="v2-search-clear"
+                  type="button"
+                  onClick={() => { setQuery(''); searchRef.current?.focus(); }}
+                  aria-label="Clear search"
+                >
+                  <Icon name="close" />
+                </button>
+              ) : (
+                <kbd aria-hidden="true"><span>{SHORTCUT_MODIFIER}</span><span>K</span></kbd>
+              )}
+            </div>
+          ) : null}
 
           <div className="v2-filter-bar">
-          <div className="v2-filters" role="group" aria-label="Filter places by category">
-            {availableFilters.map((filter) => (
-              <button
-                key={filter.value}
-                className={activeCategory === filter.value ? 'is-active' : ''}
-                type="button"
-                onClick={() => changeCategory(filter.value)}
-                aria-pressed={activeCategory === filter.value}
-              >
-                {filter.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="v2-mentions" role="group" aria-labelledby="v2-mentions-label">
-            <span id="v2-mentions-label">Mentions</span>
-            {MENTION_FILTERS.map((filter) => (
-              <button
-                key={filter.value}
-                className={minMentions === filter.value ? 'is-active' : ''}
-                type="button"
-                onClick={() => changeMentions(filter.value)}
-                aria-pressed={minMentions === filter.value}
-                title={filter.value > 1 ? `Places mentioned by ${filter.value} or more sources` : 'Any number of sources'}
-              >
-                {filter.label}
-              </button>
-            ))}
-          </div>
+            <div className="v2-filters" role="group" aria-label="Filter places by category">
+              {availableFilters.map((filter) => (
+                <button
+                  key={filter.value}
+                  className={activeCategory === filter.value ? 'is-active' : ''}
+                  type="button"
+                  onClick={() => changeCategory(filter.value)}
+                  aria-pressed={activeCategory === filter.value}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
           </div>
         </header>
 
@@ -1816,13 +1824,10 @@ export function DesignTwoMapScreen() {
           ) : visiblePlaces.length === 0 ? (
             <div className="v2-empty">
               <strong>No matching places</strong>
-              <span>Try another category or a shorter search.</span>
-              <button type="button" onClick={() => { setQuery(''); setMinMentions(1); changeCategory('all'); }}>Show all places</button>
+              <span>{SHOW_SEARCH ? 'Try another category or a shorter search.' : 'Try another category.'}</span>
+              <button type="button" onClick={() => { setQuery(''); changeCategory('all'); }}>Show all places</button>
             </div>
-          ) : visiblePlaces.map((place) => {
-            const rank = places.indexOf(place) + 1;
-            const sourceCount = mentionsById.get(place.id) ?? 0;
-            return (
+          ) : visiblePlaces.map((place) => (
               <article
                 key={place.id}
                 id={`v2-place-${place.id}`}
@@ -1831,8 +1836,7 @@ export function DesignTwoMapScreen() {
                 onMouseLeave={() => setHighlightedPlaceId((current) => (current === place.id && previewPlaceId !== place.id ? null : current))}
               >
                 <span className={`v2-place-thumb tone-${place.placeholderTone}`} aria-hidden="true">
-                  {place.photo ? <V2Image src={place.photo.thumb} /> : null}
-                  <span>{String(rank).padStart(2, '0')}</span>
+                  {place.photo ? <V2Image src={listPhotoUrl(place.photo)} /> : null}
                 </span>
                 <span className="v2-place-copy">
                   <span className="v2-place-type"><i style={{ backgroundColor: CATEGORY_META[place.category].color }} />{CATEGORY_META[place.category].label}</span>
@@ -1841,23 +1845,15 @@ export function DesignTwoMapScreen() {
                   </button>
                   <span className="v2-place-description" title={place.why}>{place.why}</span>
                   {place.photo ? <PhotoCredit photo={place.photo} /> : null}
-                  {sourceCount > 0 ? (
-                    <span className="v2-place-sources">
-                      {sourceCount} {sourceCount === 1 ? 'source' : 'sources'}
-                    </span>
-                  ) : null}
                 </span>
               </article>
-            );
-          })}
+            ))}
         </div>
         </>
         )}
 
         <footer className="v2-sidebar-footer">
-          <span>Selected by hand</span>
           <a href="/privacy">Privacy policy</a>
-          <span>{places.length} places in {activeCity.name}</span>
         </footer>
       </aside>
 
@@ -1875,7 +1871,7 @@ export function DesignTwoMapScreen() {
           <button type="button" onClick={() => window.location.reload()}>Retry</button>
         </div>
       )}
-      {!isOnline && <div className="v2-offline" role="status">Offline · showing cached guide content</div>}
+      {!isOnline && <div className="v2-offline" role="status">Offline — showing cached guide content</div>}
       {lightbox?.place.photo ? <PhotoLightbox place={lightbox.place} city={activeCity} initialIndex={lightbox.index} onClose={closeLightbox} /> : null}
 
     </main>

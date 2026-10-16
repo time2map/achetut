@@ -285,7 +285,7 @@ export const EUROPE_OVERVIEW = {
 export function cityGuideCopy(city: CuratedCity, category: 'all' | PlaceCategory = 'all') {
   if (category !== 'all') {
     return {
-      eyebrow: `${city.name} · ${city.country}`,
+      eyebrow: `${city.name}, ${city.country}`,
       title: CATEGORY_META[category].label,
       summary: CATEGORY_BLURB[category]
     };
