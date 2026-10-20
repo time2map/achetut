@@ -1654,7 +1654,7 @@ function PlaceDetail({
   );
 }
 
-export function DesignTwoMapScreen() {
+export function MapScreen() {
   const previewLoading = useMemo(readPreviewLoading, []);
   const loadingMode = useMemo(() => {
     const value = new URLSearchParams(window.location.search).get('loading');
