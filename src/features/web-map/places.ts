@@ -112,7 +112,7 @@ type TopCityFile = {
 };
 
 export const CATEGORY_META: Record<PlaceCategory, { label: string; color: string }> = {
-  architecture: { label: 'Architecture', color: '#2f6d74' },
+  architecture: { label: 'Architecture', color: '#176b87' },
   'city-core': { label: 'City core', color: '#bd4039' },
   housing: { label: 'Housing', color: '#9b5f2b' },
   parks: { label: 'Parks', color: '#477353' },

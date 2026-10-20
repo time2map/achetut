@@ -1,4 +1,17 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useTransition, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
+import {
+  createContext,
+  memo,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode
+} from 'react';
 import { createPortal } from 'react-dom';
 import type { Map as MapboxMap } from 'mapbox-gl';
 import Map, { AttributionControl, Marker, NavigationControl, Popup, useControl } from 'react-map-gl/mapbox';
@@ -20,7 +33,6 @@ import {
 
 const MAPBOX_TOKEN = env.mapboxAccessToken;
 const MAPBOX_STYLE = env.mapboxStyle;
-const ROUTE_BASE = '/design-2';
 const CITY_ZOOM = 12.35;
 const PLACE_ZOOM = 14.6;
 const PLACE_3D_ZOOM = 17;
@@ -39,7 +51,18 @@ function readPreviewLoading() {
 }
 
 type CategoryFilter = 'all' | PlaceCategory;
-type IconName = 'arrow-left' | 'arrow-up-right' | 'check' | 'chevron-down' | 'chevron-left' | 'chevron-right' | 'close' | 'external' | 'location' | 'search';
+type IconName =
+  | 'arrow-left'
+  | 'arrow-up-right'
+  | 'check'
+  | 'chevron-down'
+  | 'chevron-left'
+  | 'chevron-right'
+  | 'close'
+  | 'external'
+  | 'location'
+  | 'search';
+type MapViewportBounds = { west: number; south: number; east: number; north: number };
 
 const SHORTCUT_MODIFIER = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl';
 const LIGHTBOX_WIDTH = 1920;
@@ -57,19 +80,65 @@ const FILTERS: { value: CategoryFilter; label: string }[] = [
 
 function Icon({ name }: { name: IconName }) {
   const paths: Record<IconName, ReactNode> = {
-    'arrow-left': <><path d="M19 12H5" /><path d="m12 19-7-7 7-7" /></>,
-    'arrow-up-right': <><path d="M7 17 17 7" /><path d="M8 7h9v9" /></>,
+    'arrow-left': (
+      <>
+        <path d="M19 12H5" />
+        <path d="m12 19-7-7 7-7" />
+      </>
+    ),
+    'arrow-up-right': (
+      <>
+        <path d="M7 17 17 7" />
+        <path d="M8 7h9v9" />
+      </>
+    ),
     check: <path d="m5 12.5 4.5 4.5L19 7.5" />,
     'chevron-down': <path d="m7 10 5 5 5-5" />,
     'chevron-left': <path d="m15 6-6 6 6 6" />,
     'chevron-right': <path d="m9 6 6 6-6 6" />,
-    close: <><path d="M6 6l12 12" /><path d="M18 6 6 18" /></>,
-    external: <><path d="M14 5h5v5" /><path d="m10 14 9-9" /><path d="M19 13v6H5V5h6" /></>,
-    location: <><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></>,
-    search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></>
+    close: (
+      <>
+        <path d="M6 6l12 12" />
+        <path d="M18 6 6 18" />
+      </>
+    ),
+    external: (
+      <>
+        <path d="M14 5h5v5" />
+        <path d="m10 14 9-9" />
+        <path d="M19 13v6H5V5h6" />
+      </>
+    ),
+    location: (
+      <>
+        <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" />
+        <circle
+          cx="12"
+          cy="10"
+          r="2.5"
+        />
+      </>
+    ),
+    search: (
+      <>
+        <circle
+          cx="11"
+          cy="11"
+          r="7"
+        />
+        <path d="m20 20-4-4" />
+      </>
+    )
   };
 
-  return <svg className="v2-icon" viewBox="0 0 24 24" aria-hidden="true">{paths[name]}</svg>;
+  return (
+    <svg
+      className="v2-icon"
+      viewBox="0 0 24 24"
+      aria-hidden="true">
+      {paths[name]}
+    </svg>
+  );
 }
 
 function V2Image({
@@ -103,12 +172,23 @@ function V2Image({
     if (node?.complete && node.naturalWidth > 0) setStatus('ready');
   }, [src]);
 
-  if (previewLoading) return <span className="v2-skeleton" aria-hidden="true" />;
+  if (previewLoading)
+    return (
+      <span
+        className="v2-skeleton"
+        aria-hidden="true"
+      />
+    );
   if (!src || status === 'error') return null;
 
   return (
     <>
-      {status === 'loading' ? <span className="v2-skeleton" aria-hidden="true" /> : null}
+      {status === 'loading' ? (
+        <span
+          className="v2-skeleton"
+          aria-hidden="true"
+        />
+      ) : null}
       <img
         ref={imageRef}
         className={`v2-fade-img${status === 'ready' ? ' is-ready' : ''}${className ? ` ${className}` : ''}`}
@@ -132,15 +212,29 @@ function V2Image({
 
 function PhotoCredit({ photo }: { photo: PlacePhoto }) {
   return (
-    <span className="v2-photo-credit" onClick={(event) => event.stopPropagation()}>
+    <span
+      className="v2-photo-credit"
+      onClick={(event) => event.stopPropagation()}>
       Photo{' '}
-      <a href={photo.page} target="_blank" rel="noreferrer">{photo.author || 'Unknown author'}</a>
+      <a
+        href={photo.page}
+        target="_blank"
+        rel="noreferrer">
+        {photo.author || 'Unknown author'}
+      </a>
       {photo.license ? (
         <>
           {', '}
-          {photo.licenseUrl
-            ? <a href={photo.licenseUrl} target="_blank" rel="noreferrer">{photo.license}</a>
-            : photo.license}
+          {photo.licenseUrl ? (
+            <a
+              href={photo.licenseUrl}
+              target="_blank"
+              rel="noreferrer">
+              {photo.license}
+            </a>
+          ) : (
+            photo.license
+          )}
         </>
       ) : null}
     </span>
@@ -149,10 +243,16 @@ function PhotoCredit({ photo }: { photo: PlacePhoto }) {
 
 function PlaceListSkeleton({ count = 8 }: { count?: number }) {
   return (
-    <div className="v2-results-skeleton" aria-hidden="true">
+    <div
+      className="v2-results-skeleton"
+      aria-hidden="true">
       {Array.from({ length: count }, (_, index) => (
-        <article key={index} className="v2-place-row is-skeleton">
-          <span className="v2-place-thumb"><span className="v2-skeleton" /></span>
+        <article
+          key={index}
+          className="v2-place-row is-skeleton">
+          <span className="v2-place-thumb">
+            <span className="v2-skeleton" />
+          </span>
           <span className="v2-place-copy">
             <span className="v2-skel-line is-kicker" />
             <span className="v2-skel-line is-title" />
@@ -169,8 +269,13 @@ function CityListSkeleton({ count = 8 }: { count?: number }) {
   return (
     <>
       {Array.from({ length: count }, (_, index) => (
-        <li key={index} className="is-skeleton" aria-hidden="true">
-          <span className="v2-city-thumb"><span className="v2-skeleton" /></span>
+        <li
+          key={index}
+          className="is-skeleton"
+          aria-hidden="true">
+          <span className="v2-city-thumb">
+            <span className="v2-skeleton" />
+          </span>
           <span className="v2-city-option-copy">
             <span className="v2-skel-line is-title" />
             <span className="v2-skel-line is-meta" />
@@ -205,7 +310,17 @@ function listPhotoUrl(photo: PlacePhoto) {
   return source.replace(/\/\d+px-([^/?#]+)$/, '/250px-$1');
 }
 
-function PhotoLightbox({ place, city, initialIndex = 0, onClose }: { place: CuratedPlace; city: CuratedCity; initialIndex?: number; onClose: () => void }) {
+function PhotoLightbox({
+  place,
+  city,
+  initialIndex = 0,
+  onClose
+}: {
+  place: CuratedPlace;
+  city: CuratedCity;
+  initialIndex?: number;
+  onClose: () => void;
+}) {
   const previewLoading = useContext(PreviewLoadingContext);
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const closeRef = useRef<HTMLButtonElement | null>(null);
@@ -213,28 +328,24 @@ function PhotoLightbox({ place, city, initialIndex = 0, onClose }: { place: Cura
   const swipedRef = useRef(false);
   const photos = place.photos;
   const [index, setIndex] = useState(() => Math.min(initialIndex, photos.length - 1));
-  const [largeSrc, setLargeSrc] = useState<Record<number, string>>({});
   const [loaded, setLoaded] = useState<Record<string, boolean>>({});
   const photo = photos[index] as PlacePhoto;
-  const src = largeSrc[index] ?? (photo.src || photo.thumb);
+  const src = largePhotoUrl(photo) ?? photo.src ?? photo.thumb;
   const hasMany = photos.length > 1;
 
-  const step = useCallback((delta: number) => {
-    setIndex((current) => (current + delta + photos.length) % photos.length);
-  }, [photos.length]);
+  const step = useCallback(
+    (delta: number) => {
+      setIndex((current) => (current + delta + photos.length) % photos.length);
+    },
+    [photos.length]
+  );
 
   useEffect(() => {
-    const large = largePhotoUrl(photo);
-    if (!large || largeSrc[index]) return;
-    let cancelled = false;
-    const preload = new Image();
-    preload.onload = () => { if (!cancelled) setLargeSrc((current) => ({ ...current, [index]: large })); };
-    preload.src = large;
     [photos[index + 1], photos[index - 1]].forEach((neighbour) => {
-      if (neighbour) new Image().src = neighbour.src || neighbour.thumb;
+      if (!neighbour) return;
+      new Image().src = largePhotoUrl(neighbour) ?? neighbour.src ?? neighbour.thumb;
     });
-    return () => { cancelled = true; };
-  }, [index, largeSrc, photo, photos]);
+  }, [index, photos]);
 
   useEffect(() => {
     const previousFocus = document.activeElement as HTMLElement | null;
@@ -255,8 +366,13 @@ function PhotoLightbox({ place, city, initialIndex = 0, onClose }: { place: Cura
       const focusable = [...dialogRef.current.querySelectorAll<HTMLElement>('button, a[href]')];
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
-      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
+      }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => {
@@ -273,9 +389,15 @@ function PhotoLightbox({ place, city, initialIndex = 0, onClose }: { place: Cura
       tabIndex={-1}
       aria-modal="true"
       aria-labelledby="v2-lightbox-title"
-      onClick={(event) => { if (event.target === event.currentTarget) onClose(); }}
-    >
-      <button ref={closeRef} className="v2-lightbox-close" type="button" onClick={onClose} aria-label="Close photo">
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}>
+      <button
+        ref={closeRef}
+        className="v2-lightbox-close"
+        type="button"
+        onClick={onClose}
+        aria-label="Close photo">
         <Icon name="close" />
       </button>
       <figure>
@@ -301,8 +423,7 @@ function PhotoLightbox({ place, city, initialIndex = 0, onClose }: { place: Cura
               swipedRef.current = true;
               step(dx < 0 ? 1 : -1);
             }
-          }}
-        >
+          }}>
           <img
             key={src}
             src={src}
@@ -311,14 +432,27 @@ function PhotoLightbox({ place, city, initialIndex = 0, onClose }: { place: Cura
             onLoad={() => setLoaded((current) => ({ ...current, [src]: true }))}
             onClick={(event) => event.stopPropagation()}
           />
-          {hasMany ? <span className="v2-lightbox-counter" aria-live="polite">{index + 1} / {photos.length}</span> : null}
+          {hasMany ? (
+            <span
+              className="v2-lightbox-counter"
+              aria-live="polite">
+              {index + 1} / {photos.length}
+            </span>
+          ) : null}
         </div>
         {hasMany ? (
           <div className="v2-lightbox-controls">
-            <button className="v2-lightbox-nav is-prev" type="button" onClick={() => step(-1)} aria-label="Previous photo">
+            <button
+              className="v2-lightbox-nav is-prev"
+              type="button"
+              onClick={() => step(-1)}
+              aria-label="Previous photo">
               <Icon name="chevron-down" />
             </button>
-            <div className="v2-lightbox-thumbs" role="group" aria-label="Photos">
+            <div
+              className="v2-lightbox-thumbs"
+              role="group"
+              aria-label="Photos">
               {photos.map((item, itemIndex) => (
                 <button
                   key={item.page || item.src}
@@ -326,13 +460,16 @@ function PhotoLightbox({ place, city, initialIndex = 0, onClose }: { place: Cura
                   type="button"
                   onClick={() => setIndex(itemIndex)}
                   aria-label={`Photo ${itemIndex + 1}`}
-                  aria-current={itemIndex === index}
-                >
+                  aria-current={itemIndex === index}>
                   <V2Image src={item.marker} />
                 </button>
               ))}
             </div>
-            <button className="v2-lightbox-nav is-next" type="button" onClick={() => step(1)} aria-label="Next photo">
+            <button
+              className="v2-lightbox-nav is-next"
+              type="button"
+              onClick={() => step(1)}
+              aria-label="Next photo">
               <Icon name="chevron-down" />
             </button>
           </div>
@@ -345,7 +482,11 @@ function PhotoLightbox({ place, city, initialIndex = 0, onClose }: { place: Cura
           <strong id="v2-lightbox-title">{place.title}</strong>
           <PhotoCredit photo={photo} />
           {photo.page ? (
-            <a className="v2-lightbox-link" href={photo.page} target="_blank" rel="noreferrer">
+            <a
+              className="v2-lightbox-link"
+              href={photo.page}
+              target="_blank"
+              rel="noreferrer">
               Wikimedia Commons <Icon name="external" />
             </a>
           ) : null}
@@ -358,7 +499,10 @@ function PhotoLightbox({ place, city, initialIndex = 0, onClose }: { place: Cura
 function CityThumb({ city }: { city: CuratedCity }) {
   const [coverReady, setCoverReady] = useState(false);
   return (
-    <span className={`v2-city-thumb${coverReady ? ' has-image' : ''}`} style={{ backgroundColor: city.art }} aria-hidden="true">
+    <span
+      className={`v2-city-thumb${coverReady ? ' has-image' : ''}`}
+      style={{ backgroundColor: city.art }}
+      aria-hidden="true">
       <span>{city.name.charAt(0)}</span>
       <V2Image
         src={city.cover?.thumb}
@@ -369,13 +513,32 @@ function CityThumb({ city }: { city: CuratedCity }) {
   );
 }
 
-function CitySelect({ city, onSelect, onOpen, pending = false, forceOpen = false, forceLoading = false }: { city: CuratedCity; onSelect: (cityId: string) => void; onOpen?: () => void; pending?: boolean; forceOpen?: boolean; forceLoading?: boolean }) {
+function CitySelect({
+  city,
+  onSelect,
+  onOpen,
+  pending = false,
+  forceOpen = false,
+  forceLoading = false
+}: {
+  city: CuratedCity;
+  onSelect: (cityId: string) => void;
+  onOpen?: () => void;
+  pending?: boolean;
+  forceOpen?: boolean;
+  forceLoading?: boolean;
+}) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const listRef = useRef<HTMLUListElement | null>(null);
   const [isOpen, setIsOpen] = useState(forceOpen);
   const [menuReady, setMenuReady] = useState(!forceLoading && !forceOpen);
-  const [activeIndex, setActiveIndex] = useState(() => Math.max(0, CITIES.findIndex((item) => item.id === city.id)));
+  const [activeIndex, setActiveIndex] = useState(() =>
+    Math.max(
+      0,
+      CITIES.findIndex((item) => item.id === city.id)
+    )
+  );
   const selectedIndex = CITIES.findIndex((item) => item.id === city.id);
 
   const open = () => {
@@ -483,13 +646,40 @@ function CitySelect({ city, onSelect, onOpen, pending = false, forceOpen = false
       setActiveIndex(index);
       scrollOptionIntoMenu(index);
     };
-    if (event.key === 'ArrowDown') { event.preventDefault(); moveActive(Math.min(last, activeIndex + 1)); return; }
-    if (event.key === 'ArrowUp') { event.preventDefault(); moveActive(Math.max(0, activeIndex - 1)); return; }
-    if (event.key === 'Home') { event.preventDefault(); moveActive(0); return; }
-    if (event.key === 'End') { event.preventDefault(); moveActive(last); return; }
-    if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); choose(activeIndex); return; }
-    if (event.key === 'Escape') { event.preventDefault(); close(); return; }
-    if (event.key === 'Tab') { setIsOpen(false); return; }
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      moveActive(Math.min(last, activeIndex + 1));
+      return;
+    }
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      moveActive(Math.max(0, activeIndex - 1));
+      return;
+    }
+    if (event.key === 'Home') {
+      event.preventDefault();
+      moveActive(0);
+      return;
+    }
+    if (event.key === 'End') {
+      event.preventDefault();
+      moveActive(last);
+      return;
+    }
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      choose(activeIndex);
+      return;
+    }
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      close();
+      return;
+    }
+    if (event.key === 'Tab') {
+      setIsOpen(false);
+      return;
+    }
     if (event.key.length === 1 && /\S/.test(event.key)) {
       const letter = event.key.toLocaleLowerCase();
       const start = activeIndex + 1;
@@ -500,8 +690,14 @@ function CitySelect({ city, onSelect, onOpen, pending = false, forceOpen = false
   };
 
   return (
-    <div ref={rootRef} className={`v2-city-select${isOpen ? ' is-open' : ''}`}>
-      <span className="v2-visually-hidden" id="v2-city-select-label">City</span>
+    <div
+      ref={rootRef}
+      className={`v2-city-select${isOpen ? ' is-open' : ''}`}>
+      <span
+        className="v2-visually-hidden"
+        id="v2-city-select-label">
+        City
+      </span>
       <button
         ref={triggerRef}
         className={`v2-city-trigger${pending ? ' is-pending' : ''}`}
@@ -512,14 +708,19 @@ function CitySelect({ city, onSelect, onOpen, pending = false, forceOpen = false
         aria-labelledby={pending ? undefined : 'v2-city-select-label v2-city-select-value'}
         aria-label={pending ? 'Loading city' : undefined}
         onClick={() => (isOpen ? close(false) : open())}
-        onKeyDown={onTriggerKeyDown}
-      >
+        onKeyDown={onTriggerKeyDown}>
         {pending ? (
-          <span className="v2-city-thumb" aria-hidden="true"><span className="v2-skeleton" /></span>
+          <span
+            className="v2-city-thumb"
+            aria-hidden="true">
+            <span className="v2-skeleton" />
+          </span>
         ) : (
           <CityThumb city={city} />
         )}
-        <span className="v2-city-trigger-copy" id="v2-city-select-value">
+        <span
+          className="v2-city-trigger-copy"
+          id="v2-city-select-value">
           {pending ? (
             <>
               <span className="v2-skel-line is-meta" />
@@ -527,7 +728,9 @@ function CitySelect({ city, onSelect, onOpen, pending = false, forceOpen = false
             </>
           ) : (
             <>
-              <small>{city.country}, {city.places.length} places</small>
+              <small>
+                {city.country}, {city.places.length} places
+              </small>
               <strong>{city.name}</strong>
             </>
           )}
@@ -544,30 +747,36 @@ function CitySelect({ city, onSelect, onOpen, pending = false, forceOpen = false
           aria-labelledby="v2-city-select-label"
           aria-busy={!menuReady || forceLoading}
           aria-activedescendant={menuReady ? `v2-city-option-${CITIES[activeIndex]?.id}` : undefined}
-          onKeyDown={onListKeyDown}
-        >
-          {forceLoading || !menuReady ? <CityListSkeleton count={CITIES.length} /> : CITIES.map((item, index) => {
-            const isSelected = item.id === city.id;
-            return (
-              <li
-                key={item.id}
-                id={`v2-city-option-${item.id}`}
-                role="option"
-                aria-selected={isSelected}
-                className={`${index === activeIndex ? 'is-active' : ''}${isSelected ? ' is-selected' : ''}`}
-                onPointerMove={() => setActiveIndex(index)}
-                onClick={() => choose(index)}
-              >
-                <CityThumb city={item} />
-                <span className="v2-city-option-copy">
-                  <strong>{item.name}</strong>
-                  <small>{item.country}</small>
-                </span>
-                <span className="v2-city-option-count" aria-label={`${item.places.length} places`}>{item.places.length}</span>
-                <span className="v2-city-option-check">{isSelected ? <Icon name="check" /> : null}</span>
-              </li>
-            );
-          })}
+          onKeyDown={onListKeyDown}>
+          {forceLoading || !menuReady ? (
+            <CityListSkeleton count={CITIES.length} />
+          ) : (
+            CITIES.map((item, index) => {
+              const isSelected = item.id === city.id;
+              return (
+                <li
+                  key={item.id}
+                  id={`v2-city-option-${item.id}`}
+                  role="option"
+                  aria-selected={isSelected}
+                  className={`${index === activeIndex ? 'is-active' : ''}${isSelected ? ' is-selected' : ''}`}
+                  onPointerMove={() => setActiveIndex(index)}
+                  onClick={() => choose(index)}>
+                  <CityThumb city={item} />
+                  <span className="v2-city-option-copy">
+                    <strong>{item.name}</strong>
+                    <small>{item.country}</small>
+                  </span>
+                  <span
+                    className="v2-city-option-count"
+                    aria-label={`${item.places.length} places`}>
+                    {item.places.length}
+                  </span>
+                  <span className="v2-city-option-check">{isSelected ? <Icon name="check" /> : null}</span>
+                </li>
+              );
+            })
+          )}
         </ul>
       )}
     </div>
@@ -575,7 +784,7 @@ function CitySelect({ city, onSelect, onOpen, pending = false, forceOpen = false
 }
 
 function cityPath(cityId: string) {
-  return `${ROUTE_BASE}/${cityId}`;
+  return `/${cityId}`;
 }
 
 function placePath(cityId: string, placeId: string) {
@@ -584,15 +793,13 @@ function placePath(cityId: string, placeId: string) {
 
 function parseRoute() {
   const segments = window.location.pathname.split('/').filter(Boolean);
-  const baseIndex = segments.indexOf('design-2');
-  const routeCityId = segments[baseIndex + 1] && CITY_BY_ID[segments[baseIndex + 1]]
-    ? segments[baseIndex + 1]
-    : null;
+  const routeCityId = segments[0] && CITY_BY_ID[segments[0]] ? segments[0] : null;
   const savedCityId = localStorage.getItem('achetut-city-v2');
   const cityId = routeCityId ?? (savedCityId && CITY_BY_ID[savedCityId] ? savedCityId : DEFAULT_CITY_ID);
-  const placeId = segments[baseIndex + 2] && CITY_BY_ID[cityId].places.some((place) => place.id === segments[baseIndex + 2])
-    ? segments[baseIndex + 2]
-    : null;
+  const placeId =
+    segments[1] && CITY_BY_ID[cityId].places.some((place) => place.id === segments[1])
+      ? segments[1]
+      : null;
   return { cityId, placeId };
 }
 
@@ -610,6 +817,36 @@ function getSheetHeights(viewportHeight: number): SheetHeights {
     half: Math.min(520, Math.max(300, Math.round(viewportHeight * 0.5))),
     full: viewportHeight - 64
   };
+}
+
+const SHEET_GRIP_SELECTOR = '.v2-sheet-handle, .v2-sidebar-header, .v2-detail-bar';
+const SHEET_SCROLL_SELECTOR = '.v2-results, .v2-detail';
+const SHEET_IGNORE_SELECTOR = '.v2-city-menu, input, textarea, select';
+const SHEET_FLICK_VELOCITY = 0.45;
+
+type SheetGesture = {
+  zone: 'grip' | 'content';
+  scroller: HTMLElement | null;
+  startX: number;
+  startY: number;
+  startHeight: number;
+  lastY: number;
+  lastTime: number;
+  velocity: number;
+  mode: 'pending' | 'drag' | 'ignore';
+};
+
+function nearestSheetLevel(heights: SheetHeights, height: number, velocity: number): SheetLevel {
+  if (velocity > SHEET_FLICK_VELOCITY) return SHEET_LEVELS.find((level) => heights[level] > height + 8) ?? 'full';
+  if (velocity < -SHEET_FLICK_VELOCITY) return [...SHEET_LEVELS].reverse().find((level) => heights[level] < height - 8) ?? 'peek';
+  return SHEET_LEVELS.reduce((best, level) => (Math.abs(heights[level] - height) < Math.abs(heights[best] - height) ? level : best), 'half');
+}
+
+// Past the snap points the sheet follows the finger with resistance instead of stopping dead.
+function rubberBandSheet(heights: SheetHeights, height: number) {
+  if (height > heights.full) return heights.full + (height - heights.full) * 0.2;
+  if (height < heights.peek) return Math.max(heights.peek - 48, heights.peek - (heights.peek - height) * 0.2);
+  return height;
 }
 
 // The map stays usable behind a full sheet, so camera padding never exceeds the half sheet.
@@ -631,6 +868,44 @@ function getMapPadding() {
   return { top: 32, right: 32, bottom: 32, left: 464 };
 }
 
+// Padding moves the camera's focal point; re-centre so whatever is on screen stays put.
+function setPaddingKeepingView(map: MapboxMap, padding: ReturnType<typeof getMapPadding>) {
+  const container = map.getContainer();
+  const x = (padding.left + container.clientWidth - padding.right) / 2;
+  const y = (padding.top + container.clientHeight - padding.bottom) / 2;
+  map.jumpTo({ center: map.unproject([x, y]), padding });
+}
+
+function getBufferedMapBounds(map: MapboxMap): MapViewportBounds | null {
+  const bounds = map.getBounds();
+  if (!bounds) return null;
+  const longitudePadding = (bounds.getEast() - bounds.getWest()) * 0.2;
+  const latitudePadding = (bounds.getNorth() - bounds.getSouth()) * 0.2;
+  return {
+    west: bounds.getWest() - longitudePadding,
+    south: bounds.getSouth() - latitudePadding,
+    east: bounds.getEast() + longitudePadding,
+    north: bounds.getNorth() + latitudePadding
+  };
+}
+
+function isPlaceInsideBounds(place: CuratedPlace, bounds: MapViewportBounds) {
+  const [longitude, latitude] = place.coordinates;
+  return longitude >= bounds.west && longitude <= bounds.east && latitude >= bounds.south && latitude <= bounds.north;
+}
+
+const applied3dObjects = new WeakMap<MapboxMap, boolean>();
+
+function setShow3dObjects(map: MapboxMap, show: boolean) {
+  if (applied3dObjects.get(map) === show) return;
+  try {
+    map.setConfigProperty('basemap', 'show3dObjects', show);
+    applied3dObjects.set(map, show);
+  } catch {
+    // Styles without the Standard basemap import don't expose this config.
+  }
+}
+
 function focusPlaceCamera(map: MapboxMap, place: CuratedPlace, buildings3d: boolean) {
   const padding = getMapPadding();
   if (!buildings3d) {
@@ -645,20 +920,30 @@ function focusPlaceCamera(map: MapboxMap, place: CuratedPlace, buildings3d: bool
     return;
   }
   const bearing = map.getPitch() > 20 ? map.getBearing() : PLACE_3D_BEARING;
+  // On desktop a tilted building gets headroom for its silhouette; on mobile the
+  // place sits in the middle of the map strip above the sheet.
+  const headroom = window.innerWidth < MOBILE_QUERY_WIDTH ? 0 : Math.min(160, Math.round(window.innerHeight * 0.14));
   map.flyTo({
     center: place.coordinates,
     zoom: PLACE_3D_ZOOM,
     pitch: PLACE_3D_PITCH,
     bearing,
-    // A tilted building rises above its anchor point, so leave headroom for the silhouette.
-    padding: { ...padding, top: padding.top + Math.min(160, Math.round(window.innerHeight * 0.14)) },
+    padding: { ...padding, top: padding.top + headroom },
     duration: 1400,
     curve: 1.2,
     essential: true
   });
 }
 
-function Buildings3DControl({ enabled, active, onToggle }: { enabled: boolean; active: boolean; onToggle: () => void }) {
+function Buildings3DControl({
+  enabled,
+  active,
+  onToggle
+}: {
+  enabled: boolean;
+  active: boolean;
+  onToggle: () => void;
+}) {
   const [container] = useState(() => {
     const element = document.createElement('div');
     element.className = 'mapboxgl-ctrl mapboxgl-ctrl-group v2-3d-control';
@@ -671,9 +956,14 @@ function Buildings3DControl({ enabled, active, onToggle }: { enabled: boolean; a
       className={`v2-3d-toggle${enabled ? ' is-enabled' : ''}${active ? ' is-active' : ''}`}
       onClick={onToggle}
       aria-pressed={enabled}
-      aria-label="3D buildings"
-      title={!enabled ? 'Show 3D buildings' : active ? 'Hide 3D buildings' : '3D buildings will appear when you zoom in closer'}
-    >
+      aria-label={enabled ? 'Disable 3D buildings' : 'Enable 3D buildings'}
+      title={
+        !enabled
+          ? 'Show 3D buildings'
+          : active
+            ? 'Hide 3D buildings'
+            : '3D buildings will appear when you zoom in closer'
+      }>
       3D
     </button>,
     container
@@ -700,12 +990,16 @@ function appendPopupMeta(parent: HTMLElement, label: string, value?: string) {
   parent.append(item);
 }
 
-const EXPAND_ICON = '<svg class="v2-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6"/><path d="M10 20H4v-6"/><path d="m20 4-6.5 6.5"/><path d="m4 20 6.5-6.5"/></svg>';
+const EXPAND_ICON =
+  '<svg class="v2-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6"/><path d="M10 20H4v-6"/><path d="m20 4-6.5 6.5"/><path d="m4 20 6.5-6.5"/></svg>';
 
-const NO_PHOTO_ICON = '<svg class="v2-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"/><path d="M9.5 5H15l1.5 2H19a2 2 0 0 1 2 2v8.5"/><path d="M17 19H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h2"/><path d="M9.9 10.9a3 3 0 0 0 4.2 4.2"/></svg>';
+const NO_PHOTO_ICON =
+  '<svg class="v2-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"/><path d="M9.5 5H15l1.5 2H19a2 2 0 0 1 2 2v8.5"/><path d="M17 19H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h2"/><path d="M9.9 10.9a3 3 0 0 0 4.2 4.2"/></svg>';
 
-const LOCATION_ICON = '<svg class="v2-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>';
-const ARROW_ICON = '<svg class="v2-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg>';
+const LOCATION_ICON =
+  '<svg class="v2-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>';
+const ARROW_ICON =
+  '<svg class="v2-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg>';
 
 function commonsSearchUrl(place: CuratedPlace, city: CuratedCity) {
   return `https://commons.wikimedia.org/w/index.php?search=${encodeURIComponent(`${place.title} ${city.name}`)}&title=Special:MediaSearch&type=image`;
@@ -814,7 +1108,7 @@ function createPlacePin(place: CuratedPlace) {
   const category = CATEGORY_META[place.category];
   const button = document.createElement('button');
   button.type = 'button';
-  button.className = 'v2-pin';
+  button.className = `v2-pin is-${place.category}`;
   button.style.setProperty('--pin-color', category.color);
   button.setAttribute('aria-label', `${place.title}, ${category.label}`);
   button.setAttribute('aria-pressed', 'false');
@@ -863,17 +1157,25 @@ function V2PlaceMarker({
   return (
     <button
       type="button"
-      className={`v2-pin${selected ? ' is-selected' : ''}${highlighted ? ' is-highlighted' : ''}`}
+      className={`v2-pin is-${place.category}${selected ? ' is-selected' : ''}${highlighted ? ' is-highlighted' : ''}`}
       style={{ '--pin-color': category.color } as React.CSSProperties}
-      aria-label={place.photo
-        ? `${place.title}, ${category.label}. Photo by ${place.photo.author || 'unknown author'}${place.photo.license ? `, ${place.photo.license}` : ''}`
-        : `${place.title}, ${category.label}`}
-      title={place.photo ? `Photo ${place.photo.author || 'Unknown author'}${place.photo.license ? `, ${place.photo.license}` : ''}` : undefined}
+      aria-label={
+        place.photo
+          ? `${place.title}, ${category.label}. Photo by ${place.photo.author || 'unknown author'}${place.photo.license ? `, ${place.photo.license}` : ''}`
+          : `${place.title}, ${category.label}`
+      }
+      title={
+        place.photo
+          ? `Photo ${place.photo.author || 'Unknown author'}${place.photo.license ? `, ${place.photo.license}` : ''}`
+          : undefined
+      }
       aria-pressed={selected}
-      onClick={(event) => { event.stopPropagation(); onSelect(); }}
+      onClick={(event) => {
+        event.stopPropagation();
+        onSelect();
+      }}
       onMouseEnter={() => onHoverChange(true)}
-      onMouseLeave={() => onHoverChange(false)}
-    >
+      onMouseLeave={() => onHoverChange(false)}>
       <span className="v2-pin-ground" />
       <span className="v2-pin-body">
         <span className="v2-pin-tail" />
@@ -897,14 +1199,66 @@ function V2PlaceMarker({
   );
 }
 
+const MapPlaceMarker = memo(function MapPlaceMarker({
+  place,
+  selected,
+  highlighted,
+  onSelect,
+  onHoverChange
+}: {
+  place: CuratedPlace;
+  selected: boolean;
+  highlighted: boolean;
+  onSelect: (place: CuratedPlace) => void;
+  onHoverChange: (placeId: string, hovered: boolean) => void;
+}) {
+  const selectMarker = useCallback(() => onSelect(place), [onSelect, place]);
+  const changeMarkerHover = useCallback(
+    (hovered: boolean) => onHoverChange(place.id, hovered),
+    [onHoverChange, place.id]
+  );
+
+  return (
+    <Marker
+      longitude={place.coordinates[0]}
+      latitude={place.coordinates[1]}
+      anchor="bottom"
+      style={{ zIndex: selected ? 3 : highlighted ? 2 : 1 }}>
+      <V2PlaceMarker
+        place={place}
+        selected={selected}
+        highlighted={highlighted}
+        onSelect={selectMarker}
+        onHoverChange={changeMarkerHover}
+      />
+    </Marker>
+  );
+});
+
 function PopupPlaceholder({ place, city }: { place: CuratedPlace; city: CuratedCity }) {
   const initial = place.title.match(/\p{L}/u)?.[0] ?? CATEGORY_META[place.category].label.charAt(0);
   return (
-    <div className="v2-popup-media is-empty" style={{ '--ph-color': CATEGORY_META[place.category].color } as React.CSSProperties}>
-      <span className="v2-popup-empty-mark" aria-hidden="true">{initial.toLocaleUpperCase()}</span>
+    <div
+      className="v2-popup-media is-empty"
+      style={{ '--ph-color': CATEGORY_META[place.category].color } as React.CSSProperties}>
+      <span
+        className="v2-popup-empty-mark"
+        aria-hidden="true">
+        {initial.toLocaleUpperCase()}
+      </span>
       <div className="v2-popup-empty-copy">
-        <span className="v2-popup-empty-icon"><Icon name="location" /></span>
-        <span><strong>No photo yet</strong><a href={commonsSearchUrl(place, city)} target="_blank" rel="noreferrer">Search on Wikimedia Commons</a></span>
+        <span className="v2-popup-empty-icon">
+          <Icon name="location" />
+        </span>
+        <span>
+          <strong>No photo yet</strong>
+          <a
+            href={commonsSearchUrl(place, city)}
+            target="_blank"
+            rel="noreferrer">
+            Search on Wikimedia Commons
+          </a>
+        </span>
       </div>
     </div>
   );
@@ -916,13 +1270,23 @@ function HoverPreview({ place }: { place: CuratedPlace }) {
   const meta = [place.architect, place.year].filter(Boolean).join(', ');
   return (
     <div className="v2-hover-card">
-      <span className={`v2-hover-thumb tone-${place.placeholderTone}`} aria-hidden="true">
-        {place.photo && !photoFailed
-          ? <V2Image src={place.photo.thumb || place.photo.marker} onFail={() => setPhotoFailed(true)} />
-          : place.title.charAt(0)}
+      <span
+        className={`v2-hover-thumb tone-${place.placeholderTone}`}
+        aria-hidden="true">
+        {place.photo && !photoFailed ? (
+          <V2Image
+            src={place.photo.thumb || place.photo.marker}
+            onFail={() => setPhotoFailed(true)}
+          />
+        ) : (
+          place.title.charAt(0)
+        )}
       </span>
       <span className="v2-hover-copy">
-        <small><i style={{ backgroundColor: category.color }} />{category.label}</small>
+        <small>
+          <i style={{ backgroundColor: category.color }} />
+          {category.label}
+        </small>
         <strong>{place.title}</strong>
         {meta ? <span>{meta}</span> : null}
         {place.photo && !photoFailed ? <PhotoCredit photo={place.photo} /> : null}
@@ -968,13 +1332,17 @@ function PlaceDetail({
     });
   }, []);
 
-  const stepPhoto = useCallback((delta: number) => {
-    setPhotoIndex((current) => Math.min(photoCount - 1, Math.max(0, current + delta)));
-  }, [photoCount]);
+  const stepPhoto = useCallback(
+    (delta: number) => {
+      setPhotoIndex((current) => Math.min(photoCount - 1, Math.max(0, current + delta)));
+    },
+    [photoCount]
+  );
 
   useEffect(() => {
     // A list click unmounts the clicked row; keep keyboard focus inside the panel.
-    if (!document.activeElement || document.activeElement === document.body) backRef.current?.focus({ preventScroll: true });
+    if (!document.activeElement || document.activeElement === document.body)
+      backRef.current?.focus({ preventScroll: true });
   }, []);
 
   useEffect(() => {
@@ -992,7 +1360,11 @@ function PlaceDetail({
   }, [photoCount, updateThumbOverflow]);
 
   useEffect(() => {
-    thumbsRef.current?.querySelector<HTMLElement>('.is-active')?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+    const thumbs = thumbsRef.current;
+    const active = thumbs?.querySelector<HTMLElement>('.is-active');
+    if (thumbs && active) {
+      thumbs.scrollTo({ left: active.offsetLeft - (thumbs.clientWidth - active.offsetWidth) / 2, behavior: 'smooth' });
+    }
     const frame = requestAnimationFrame(updateThumbOverflow);
     return () => cancelAnimationFrame(frame);
   }, [photoIndex, updateThumbOverflow]);
@@ -1000,14 +1372,20 @@ function PlaceDetail({
   return (
     <>
       <div className="v2-detail-bar">
-        <button ref={backRef} className="v2-detail-back" type="button" onClick={onBack}>
+        <button
+          ref={backRef}
+          className="v2-detail-back"
+          type="button"
+          onClick={onBack}>
           <Icon name="arrow-left" />
           <span>All places</span>
         </button>
         <span className="v2-detail-city">{city.name}</span>
       </div>
 
-      <article className="v2-detail" aria-labelledby="v2-detail-title">
+      <article
+        className="v2-detail"
+        aria-labelledby="v2-detail-title">
         {showPhoto && photo ? (
           hasGallery ? (
             <div
@@ -1020,14 +1398,18 @@ function PlaceDetail({
                 if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
                 event.preventDefault();
                 stepPhoto(event.key === 'ArrowRight' ? 1 : -1);
-              }}
-            >
+              }}>
               <div
                 ref={viewportRef}
                 className="v2-detail-viewport"
                 onPointerDown={(event: ReactPointerEvent<HTMLDivElement>) => {
                   if (event.pointerType === 'mouse' && event.button !== 0) return;
-                  dragRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, axis: null };
+                  dragRef.current = {
+                    pointerId: event.pointerId,
+                    startX: event.clientX,
+                    startY: event.clientY,
+                    axis: null
+                  };
                   suppressClickRef.current = false;
                 }}
                 onPointerMove={(event: ReactPointerEvent<HTMLDivElement>) => {
@@ -1057,18 +1439,19 @@ function PlaceDetail({
                   else if (dx > threshold && photoIndex > 0) stepPhoto(-1);
                   setDragOffset(0);
                 }}
-                onPointerCancel={() => { dragRef.current = null; setDragOffset(0); }}
+                onPointerCancel={() => {
+                  dragRef.current = null;
+                  setDragOffset(0);
+                }}
                 onClickCapture={(event) => {
                   if (!suppressClickRef.current) return;
                   suppressClickRef.current = false;
                   event.preventDefault();
                   event.stopPropagation();
-                }}
-              >
+                }}>
                 <div
                   className={`v2-detail-track${dragOffset ? ' is-dragging' : ''}`}
-                  style={{ transform: `translate3d(calc(${-photoIndex * 100}% + ${dragOffset}px), 0, 0)` }}
-                >
+                  style={{ transform: `translate3d(calc(${-photoIndex * 100}% + ${dragOffset}px), 0, 0)` }}>
                   {photos.map((item, index) => (
                     <button
                       key={item.page || index}
@@ -1077,8 +1460,7 @@ function PlaceDetail({
                       tabIndex={index === photoIndex ? 0 : -1}
                       onClick={() => onOpenPhoto(index)}
                       aria-label={`Open photo ${index + 1} of ${photoCount} of ${place.title}`}
-                      aria-hidden={index !== photoIndex}
-                    >
+                      aria-hidden={index !== photoIndex}>
                       {failedPhotos[index] ? (
                         <span className="v2-detail-slide-fallback">{place.title.charAt(0)}</span>
                       ) : (
@@ -1095,17 +1477,35 @@ function PlaceDetail({
                 </div>
               </div>
               {photoIndex > 0 ? (
-                <button className="v2-detail-nav is-prev" type="button" onClick={() => stepPhoto(-1)} aria-label="Previous photo">
+                <button
+                  className="v2-detail-nav is-prev"
+                  type="button"
+                  onClick={() => stepPhoto(-1)}
+                  aria-label="Previous photo">
                   <Icon name="chevron-left" />
                 </button>
               ) : null}
               {photoIndex < photoCount - 1 ? (
-                <button className="v2-detail-nav is-next" type="button" onClick={() => stepPhoto(1)} aria-label="Next photo">
+                <button
+                  className="v2-detail-nav is-next"
+                  type="button"
+                  onClick={() => stepPhoto(1)}
+                  aria-label="Next photo">
                   <Icon name="chevron-right" />
                 </button>
               ) : null}
-              <span className="v2-popup-zoom has-count" data-label={`${photoIndex + 1} / ${photoCount}`} aria-hidden="true">
-                <svg className="v2-icon" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M10 20H4v-6"/><path d="m20 4-6.5 6.5"/><path d="m4 20 6.5-6.5"/></svg>
+              <span
+                className="v2-popup-zoom has-count"
+                data-label={`${photoIndex + 1} / ${photoCount}`}
+                aria-hidden="true">
+                <svg
+                  className="v2-icon"
+                  viewBox="0 0 24 24">
+                  <path d="M14 4h6v6" />
+                  <path d="M10 20H4v-6" />
+                  <path d="m20 4-6.5 6.5" />
+                  <path d="m4 20 6.5-6.5" />
+                </svg>
               </span>
             </div>
           ) : (
@@ -1113,32 +1513,46 @@ function PlaceDetail({
               className={`v2-detail-media tone-${place.placeholderTone}`}
               type="button"
               onClick={() => onOpenPhoto(photoIndex)}
-              aria-label={`Open larger photo of ${place.title}`}
-            >
+              aria-label={`Open larger photo of ${place.title}`}>
               <V2Image
                 src={photo.src || photo.thumb}
                 alt={`${place.title} in ${city.name}`}
                 loading="eager"
                 onFail={() => setFailedPhotos((current) => ({ ...current, [photoIndex]: true }))}
               />
-              <span className="v2-popup-zoom" data-label="Expand" aria-hidden="true">
-                <svg className="v2-icon" viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M10 20H4v-6"/><path d="m20 4-6.5 6.5"/><path d="m4 20 6.5-6.5"/></svg>
+              <span
+                className="v2-popup-zoom"
+                data-label="Expand"
+                aria-hidden="true">
+                <svg
+                  className="v2-icon"
+                  viewBox="0 0 24 24">
+                  <path d="M14 4h6v6" />
+                  <path d="M10 20H4v-6" />
+                  <path d="m20 4-6.5 6.5" />
+                  <path d="m4 20 6.5-6.5" />
+                </svg>
               </span>
             </button>
           )
         ) : (
-          <PopupPlaceholder place={place} city={city} />
+          <PopupPlaceholder
+            place={place}
+            city={city}
+          />
         )}
 
         {hasGallery ? (
-          <section className="v2-detail-gallery" aria-label="Photos">
-            <div className={`v2-detail-thumbs-wrap${thumbOverflow.start ? ' has-start' : ''}${thumbOverflow.end ? ' has-end' : ''}`}>
+          <section
+            className="v2-detail-gallery"
+            aria-label="Photos">
+            <div
+              className={`v2-detail-thumbs-wrap${thumbOverflow.start ? ' has-start' : ''}${thumbOverflow.end ? ' has-end' : ''}`}>
               <div
                 ref={thumbsRef}
                 className="v2-detail-thumbs"
                 role="group"
-                aria-label="Choose a photo"
-              >
+                aria-label="Choose a photo">
                 {photos.map((item, index) => (
                   <button
                     key={item.page || index}
@@ -1146,8 +1560,7 @@ function PlaceDetail({
                     className={index === photoIndex ? 'is-active' : ''}
                     onClick={() => setPhotoIndex(index)}
                     aria-label={`Show photo ${index + 1} of ${photoCount}`}
-                    aria-pressed={index === photoIndex}
-                  >
+                    aria-pressed={index === photoIndex}>
                     <V2Image src={item.thumb || item.src} />
                   </button>
                 ))}
@@ -1157,7 +1570,9 @@ function PlaceDetail({
         ) : null}
 
         {showPhoto && photo ? (
-          <p className="v2-detail-credit"><PhotoCredit photo={photo} /></p>
+          <p className="v2-detail-credit">
+            <PhotoCredit photo={photo} />
+          </p>
         ) : null}
 
         <div className="v2-detail-body">
@@ -1166,30 +1581,62 @@ function PlaceDetail({
             {category.label}
           </div>
           <h2 id="v2-detail-title">{place.title}</h2>
-          {(place.architect || place.year || place.area) ? (
+          {place.architect || place.year || place.area ? (
             <dl className="v2-popup-meta">
-              {place.architect ? <div><dt>Architect</dt><dd>{place.architect}</dd></div> : null}
-              {place.year ? <div><dt>Year</dt><dd>{place.year}</dd></div> : null}
-              {place.area ? <div><dt>Area</dt><dd>{place.area}</dd></div> : null}
+              {place.architect ? (
+                <div>
+                  <dt>Architect</dt>
+                  <dd>{place.architect}</dd>
+                </div>
+              ) : null}
+              {place.year ? (
+                <div>
+                  <dt>Year</dt>
+                  <dd>{place.year}</dd>
+                </div>
+              ) : null}
+              {place.area ? (
+                <div>
+                  <dt>Area</dt>
+                  <dd>{place.area}</dd>
+                </div>
+              ) : null}
             </dl>
           ) : null}
           <p className="v2-detail-story">{place.why}</p>
 
-          <a className="v2-popup-directions v2-detail-directions" href={googleMapsUrl(place)} target="_blank" rel="noreferrer" aria-label={`Open ${place.title} in Google Maps`}>
-            <span className="v2-popup-directions-icon"><Icon name="location" /></span>
-            <span className="v2-popup-directions-copy"><strong>Open in Google Maps</strong><small>{place.area ? `${place.area}, ${city.name}` : city.name}</small></span>
-            <span className="v2-popup-directions-arrow"><Icon name="arrow-up-right" /></span>
+          <a
+            className="v2-popup-directions v2-detail-directions"
+            href={googleMapsUrl(place)}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={`Open ${place.title} in Google Maps`}>
+            <span className="v2-popup-directions-icon">
+              <Icon name="location" />
+            </span>
+            <span className="v2-popup-directions-copy">
+              <strong>Open in Google Maps</strong>
+              <small>{place.area ? `${place.area}, ${city.name}` : city.name}</small>
+            </span>
+            <span className="v2-popup-directions-arrow">
+              <Icon name="arrow-up-right" />
+            </span>
           </a>
 
           {publishers.length > 0 ? (
-            <section className="v2-detail-sources" aria-labelledby="v2-detail-sources-title">
+            <section
+              className="v2-detail-sources"
+              aria-labelledby="v2-detail-sources-title">
               <h3 id="v2-detail-sources-title">
                 Mentioned in {publishers.length} {publishers.length === 1 ? 'source' : 'sources'}
               </h3>
               <ul>
                 {publishers.map((source) => (
                   <li key={source.url}>
-                    <a href={source.url} target="_blank" rel="noreferrer">
+                    <a
+                      href={source.url}
+                      target="_blank"
+                      rel="noreferrer">
                       <span>
                         <b>{source.publisher}</b>
                         {source.label !== source.publisher ? <small>{source.label}</small> : null}
@@ -1214,7 +1661,7 @@ export function DesignTwoMapScreen() {
     if (value === 'cities') return 'cities' as const;
     if (value === 'photos') return 'photos' as const;
     if (value === 'list') return 'list' as const;
-    return previewLoading ? 'all' as const : 'off' as const;
+    return previewLoading ? ('all' as const) : ('off' as const);
   }, [previewLoading]);
   const initialRoute = useMemo(parseRoute, []);
   const mapRef = useRef<MapboxMap | null>(null);
@@ -1224,21 +1671,38 @@ export function DesignTwoMapScreen() {
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all');
   const [query, setQuery] = useState('');
   const [mapReady, setMapReady] = useState(false);
+  const [mapViewportBounds, setMapViewportBounds] = useState<MapViewportBounds | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState(true);
-  const [isCompactPins, setIsCompactPins] = useState(false);
+  const [isCompactPins, setIsCompactPins] = useState(
+    () => (initialRoute.placeId ? PLACE_ZOOM : CITY_ZOOM) < COMPACT_PIN_ZOOM
+  );
   const [lightbox, setLightbox] = useState<{ place: CuratedPlace; index: number } | null>(null);
   const [isCityPending, startCityTransition] = useTransition();
   const [previewPlaceId, setPreviewPlaceId] = useState<string | null>(null);
   const [highlightedPlaceId, setHighlightedPlaceId] = useState<string | null>(null);
   const [buildings3d, setBuildings3d] = useState(() => localStorage.getItem(BUILDINGS_3D_STORAGE_KEY) !== 'off');
-  const [currentZoom, setCurrentZoom] = useState(() => initialRoute.placeId ? PLACE_3D_ZOOM : CITY_ZOOM);
+  // Only the threshold matters for rendering; storing the raw zoom re-rendered every marker each frame.
+  const [atBuildingsZoom, setAtBuildingsZoom] = useState(() => Boolean(initialRoute.placeId));
+  const zoomModesRef = useRef({ buildings: atBuildingsZoom, compactPins: isCompactPins });
   const buildings3dRef = useRef(buildings3d);
   buildings3dRef.current = buildings3d;
   const isUserZoomingRef = useRef(false);
+  const updateZoomModes = useCallback((zoom: number) => {
+    const nextBuildings = zoom >= BUILDINGS_3D_MIN_ZOOM;
+    const nextCompactPins = zoom < COMPACT_PIN_ZOOM;
+    if (zoomModesRef.current.buildings !== nextBuildings) {
+      zoomModesRef.current.buildings = nextBuildings;
+      setAtBuildingsZoom(nextBuildings);
+    }
+    if (zoomModesRef.current.compactPins !== nextCompactPins) {
+      zoomModesRef.current.compactPins = nextCompactPins;
+      setIsCompactPins(nextCompactPins);
+    }
+  }, []);
   const selectedPlaceRef = useRef<CuratedPlace | null>(null);
   const lastSelectedIdRef = useRef<string | null>(initialRoute.placeId);
-  const effectiveBuildings3d = buildings3d && currentZoom >= BUILDINGS_3D_MIN_ZOOM;
+  const effectiveBuildings3d = buildings3d && atBuildingsZoom;
   const closeLightbox = useCallback(() => setLightbox(null), []);
 
   const mainRef = useRef<HTMLElement | null>(null);
@@ -1251,8 +1715,12 @@ export function DesignTwoMapScreen() {
   const isMobileSheetRef = useRef(isMobileSheet);
   isMobileSheetRef.current = isMobileSheet;
   mobileSheetPadding = isMobileSheet ? sheetMapPadding(sheetLevel, sheetHeights) : null;
-  const sheetDragRef = useRef<{ startY: number; startHeight: number; moved: boolean } | null>(null);
-  const suppressHandleClickRef = useRef(false);
+  const asideRef = useRef<HTMLElement | null>(null);
+  const sheetLevelRef = useRef(sheetLevel);
+  sheetLevelRef.current = sheetLevel;
+  const sheetGestureRef = useRef<SheetGesture | null>(null);
+  const sheetFrameRef = useRef(0);
+  const suppressSheetClickRef = useRef(false);
   const focusSearchOnFullRef = useRef(false);
 
   const changeSheetLevel = useCallback((level: SheetLevel) => {
@@ -1276,9 +1744,11 @@ export function DesignTwoMapScreen() {
     const normalizedQuery = query.trim().toLocaleLowerCase();
     return places.filter((place) => {
       const matchesCategory = activeCategory === 'all' || place.category === activeCategory;
-      const matchesQuery = !normalizedQuery || [place.title, place.architect, place.area, place.year]
-        .filter(Boolean)
-        .some((value) => value?.toLocaleLowerCase().includes(normalizedQuery));
+      const matchesQuery =
+        !normalizedQuery ||
+        [place.title, place.architect, place.area, place.year]
+          .filter(Boolean)
+          .some((value) => value?.toLocaleLowerCase().includes(normalizedQuery));
       return matchesCategory && matchesQuery;
     });
   }, [activeCategory, places, query]);
@@ -1286,29 +1756,43 @@ export function DesignTwoMapScreen() {
     () => places.find((place) => place.id === selectedPlaceId) ?? null,
     [places, selectedPlaceId]
   );
+  const renderedMapPlaces = useMemo(
+    () =>
+      mapViewportBounds
+        ? visiblePlaces.filter((place) => place.id === selectedPlaceId || isPlaceInsideBounds(place, mapViewportBounds))
+        : visiblePlaces,
+    [mapViewportBounds, selectedPlaceId, visiblePlaces]
+  );
   selectedPlaceRef.current = selectedPlace;
-  const previewPlace = previewPlaceId && previewPlaceId !== selectedPlaceId
-    ? visiblePlaces.find((place) => place.id === previewPlaceId) ?? null
-    : null;
+  const previewPlace =
+    previewPlaceId && previewPlaceId !== selectedPlaceId
+      ? (visiblePlaces.find((place) => place.id === previewPlaceId) ?? null)
+      : null;
 
-  const clearSelection = useCallback((replaceHistory = false) => {
-    setSelectedPlaceId(null);
-    const method = replaceHistory ? 'replaceState' : 'pushState';
-    if (window.location.pathname !== cityPath(activeCityId)) {
-      window.history[method]({}, '', cityPath(activeCityId));
-    }
-  }, [activeCityId]);
+  const clearSelection = useCallback(
+    (replaceHistory = false) => {
+      setSelectedPlaceId(null);
+      const method = replaceHistory ? 'replaceState' : 'pushState';
+      if (window.location.pathname !== cityPath(activeCityId)) {
+        window.history[method]({}, '', cityPath(activeCityId));
+      }
+    },
+    [activeCityId]
+  );
 
-  const selectPlace = useCallback((place: CuratedPlace, moveCamera = true) => {
-    setSelectedPlaceId(place.id);
-    setPreviewPlaceId(null);
-    setHighlightedPlaceId(null);
-    if (isMobileSheetRef.current) changeSheetLevel('half');
-    lastSelectedIdRef.current = place.id;
-    const nextPath = placePath(activeCityId, place.id);
-    if (window.location.pathname !== nextPath) window.history.pushState({ placeId: place.id }, '', nextPath);
-    if (moveCamera && mapRef.current) focusPlaceCamera(mapRef.current, place, buildings3dRef.current);
-  }, [activeCityId, changeSheetLevel]);
+  const selectPlace = useCallback(
+    (place: CuratedPlace, moveCamera = true) => {
+      setSelectedPlaceId(place.id);
+      setPreviewPlaceId(null);
+      setHighlightedPlaceId(null);
+      if (isMobileSheetRef.current) changeSheetLevel('half');
+      lastSelectedIdRef.current = place.id;
+      const nextPath = placePath(activeCityId, place.id);
+      if (window.location.pathname !== nextPath) window.history.pushState({ placeId: place.id }, '', nextPath);
+      if (moveCamera && mapRef.current) focusPlaceCamera(mapRef.current, place, buildings3dRef.current);
+    },
+    [activeCityId, changeSheetLevel]
+  );
 
   const toggleBuildings3d = useCallback(() => {
     setBuildings3d((current) => {
@@ -1318,26 +1802,29 @@ export function DesignTwoMapScreen() {
     });
   }, []);
 
-  const selectCity = useCallback((cityId: string, replaceHistory = false) => {
-    const city = CITY_BY_ID[cityId] ?? CITY_BY_ID[DEFAULT_CITY_ID];
-    localStorage.setItem('achetut-city-v2', city.id);
-    startCityTransition(() => {
-      setActiveCityId(city.id);
-      setSelectedPlaceId(null);
-      setActiveCategory('all');
-      setQuery('');
-    });
-    const method = replaceHistory ? 'replaceState' : 'pushState';
-    if (window.location.pathname !== cityPath(city.id)) window.history[method]({}, '', cityPath(city.id));
-    mapRef.current?.easeTo({
-      center: city.center,
-      zoom: CITY_ZOOM,
-      pitch: 0,
-      bearing: 0,
-      padding: getMapPadding(),
-      duration: 650
-    });
-  }, [startCityTransition]);
+  const selectCity = useCallback(
+    (cityId: string, replaceHistory = false) => {
+      const city = CITY_BY_ID[cityId] ?? CITY_BY_ID[DEFAULT_CITY_ID];
+      localStorage.setItem('achetut-city-v2', city.id);
+      startCityTransition(() => {
+        setActiveCityId(city.id);
+        setSelectedPlaceId(null);
+        setActiveCategory('all');
+        setQuery('');
+      });
+      const method = replaceHistory ? 'replaceState' : 'pushState';
+      if (window.location.pathname !== cityPath(city.id)) window.history[method]({}, '', cityPath(city.id));
+      mapRef.current?.easeTo({
+        center: city.center,
+        zoom: CITY_ZOOM,
+        pitch: 0,
+        bearing: 0,
+        padding: getMapPadding(),
+        duration: 650
+      });
+    },
+    [startCityTransition]
+  );
 
   useEffect(() => {
     const applyRoute = () => {
@@ -1348,7 +1835,7 @@ export function DesignTwoMapScreen() {
         setActiveCategory('all');
         setQuery('');
       });
-      setCurrentZoom(route.placeId && buildings3dRef.current ? PLACE_3D_ZOOM : CITY_ZOOM);
+      setAtBuildingsZoom(Boolean(route.placeId && buildings3dRef.current));
       const city = CITY_BY_ID[route.cityId];
       const place = route.placeId ? city.places.find((candidate) => candidate.id === route.placeId) : null;
       if (route.placeId) lastSelectedIdRef.current = route.placeId;
@@ -1366,10 +1853,14 @@ export function DesignTwoMapScreen() {
       });
     };
 
-    if (window.location.pathname === ROUTE_BASE || window.location.pathname === `${ROUTE_BASE}/`) {
+    if (window.location.pathname === '/') {
       const savedCity = localStorage.getItem('achetut-city-v2');
       const cityId = savedCity && CITY_BY_ID[savedCity] ? savedCity : DEFAULT_CITY_ID;
       selectCity(cityId, true);
+    } else {
+      const route = parseRoute();
+      const canonicalPath = route.placeId ? placePath(route.cityId, route.placeId) : cityPath(route.cityId);
+      if (window.location.pathname !== canonicalPath) window.history.replaceState({}, '', canonicalPath);
     }
     window.addEventListener('popstate', applyRoute);
     return () => window.removeEventListener('popstate', applyRoute);
@@ -1403,11 +1894,11 @@ export function DesignTwoMapScreen() {
     const onResize = () => {
       cancelAnimationFrame(resizeFrame);
       resizeFrame = requestAnimationFrame(() => {
-        setViewport((current) => (
+        setViewport((current) =>
           current.width === window.innerWidth && current.height === window.innerHeight
             ? current
             : { width: window.innerWidth, height: window.innerHeight }
-        ));
+        );
       });
     };
     window.addEventListener('resize', onResize);
@@ -1420,10 +1911,10 @@ export function DesignTwoMapScreen() {
   useEffect(() => {
     const map = mapRef.current;
     if (!mapReady || !map) return;
-    // A camera move started in the same tick already carries the new padding.
+    // Sheet level changes don't touch the camera: every camera move passes the current padding itself.
     if (map.isMoving()) return;
-    map.easeTo({ padding: getMapPadding(), duration: 280 });
-  }, [mapReady, sheetLevel, viewport]);
+    setPaddingKeepingView(map, getMapPadding());
+  }, [mapReady, viewport]);
 
   useEffect(() => {
     if (sheetLevel !== 'full' || !focusSearchOnFullRef.current) return;
@@ -1434,54 +1925,152 @@ export function DesignTwoMapScreen() {
   const sheetHandleLabel = sheetLevel === 'full' ? 'Collapse panel' : 'Expand panel';
 
   const cycleSheet = () => {
-    if (suppressHandleClickRef.current) {
-      suppressHandleClickRef.current = false;
-      return;
-    }
     changeSheetLevel(sheetLevel === 'peek' ? 'half' : sheetLevel === 'half' ? 'full' : 'half');
   };
 
-  const clampSheetHeight = (height: number) => Math.min(sheetHeights.full, Math.max(sheetHeights.peek, height));
-
-  const onSheetPointerDown = (event: ReactPointerEvent<HTMLElement>) => {
-    if (!isMobileSheet || event.button !== 0) return;
-    try {
-      event.currentTarget.setPointerCapture(event.pointerId);
-    } catch {
-      // Synthetic or already-released pointers can't be captured; the drag still works without it.
-    }
-    sheetDragRef.current = { startY: event.clientY, startHeight: sheetHeights[sheetLevel], moved: false };
+  const stepSheet = (direction: 1 | -1) => {
+    const index = SHEET_LEVELS.indexOf(sheetLevel) + direction;
+    changeSheetLevel(SHEET_LEVELS[Math.min(SHEET_LEVELS.length - 1, Math.max(0, index))]);
   };
 
-  const onSheetPointerMove = (event: ReactPointerEvent<HTMLElement>) => {
-    const drag = sheetDragRef.current;
-    if (!drag) return;
-    const delta = drag.startY - event.clientY;
-    if (!drag.moved && Math.abs(delta) < 6) return;
-    drag.moved = true;
-    const main = mainRef.current;
-    main?.classList.add('is-sheet-dragging');
-    main?.style.setProperty('--v2-mobile-panel-height', `${clampSheetHeight(drag.startHeight + delta)}px`);
-  };
+  // Gesture state lives in refs and DOM styles so dragging never re-renders the list.
+  const sheetGesture = useMemo(() => {
+    const visibleSheetHeight = () => {
+      const main = mainRef.current;
+      const aside = asideRef.current;
+      if (!main || !aside) return sheetHeightsRef.current[sheetLevelRef.current];
+      return main.getBoundingClientRect().bottom - aside.getBoundingClientRect().top;
+    };
 
-  const onSheetPointerEnd = (event: ReactPointerEvent<HTMLElement>) => {
-    const drag = sheetDragRef.current;
-    sheetDragRef.current = null;
-    if (!drag?.moved) return;
-    suppressHandleClickRef.current = true;
-    const delta = drag.startY - event.clientY;
-    const height = clampSheetHeight(drag.startHeight + delta);
-    let next = SHEET_LEVELS.reduce((best, level) => (
-      Math.abs(sheetHeights[level] - height) < Math.abs(sheetHeights[best] - height) ? level : best
-    ), sheetLevel);
-    if (next === sheetLevel && Math.abs(delta) > 48) {
-      const step = SHEET_LEVELS.indexOf(sheetLevel) + (delta > 0 ? 1 : -1);
-      next = SHEET_LEVELS[Math.min(SHEET_LEVELS.length - 1, Math.max(0, step))];
-    }
-    const main = mainRef.current;
-    main?.classList.remove('is-sheet-dragging');
-    main?.style.setProperty('--v2-mobile-panel-height', `${sheetHeights[next]}px`);
-    changeSheetLevel(next);
+    const writeHeight = (height: number) => {
+      cancelAnimationFrame(sheetFrameRef.current);
+      sheetFrameRef.current = requestAnimationFrame(() => {
+        mainRef.current?.style.setProperty('--v2-mobile-panel-height', `${Math.round(height)}px`);
+      });
+    };
+
+    const begin = (target: EventTarget | null, x: number, y: number, time: number) => {
+      sheetGestureRef.current = null;
+      if (!isMobileSheetRef.current || !(target instanceof Element) || target.closest(SHEET_IGNORE_SELECTOR)) return;
+      const grip = target.closest(SHEET_GRIP_SELECTOR);
+      const scroller = grip ? null : target.closest<HTMLElement>(SHEET_SCROLL_SELECTOR);
+      if (!grip && !scroller) return;
+      sheetGestureRef.current = {
+        zone: grip ? 'grip' : 'content',
+        scroller,
+        startX: x,
+        startY: y,
+        startHeight: visibleSheetHeight(),
+        lastY: y,
+        lastTime: time,
+        velocity: 0,
+        mode: 'pending'
+      };
+    };
+
+    // Returns true while the sheet owns the gesture, so the caller can block native scrolling.
+    const move = (x: number, y: number, time: number) => {
+      const gesture = sheetGestureRef.current;
+      if (!gesture || gesture.mode === 'ignore') return false;
+      const dx = x - gesture.startX;
+      const dy = gesture.startY - y;
+      if (gesture.mode === 'pending') {
+        // Blocking the first moves would also kill horizontal scrolling in the filter bar.
+        if (Math.abs(dx) < 4 && Math.abs(dy) < 4) return false;
+        const vertical = Math.abs(dy) > Math.abs(dx);
+        const level = sheetLevelRef.current;
+        const atTop = !gesture.scroller || gesture.scroller.scrollTop <= 0;
+        const takes = vertical && (
+          gesture.zone === 'grip' ||
+          (dy > 0 && level !== 'full') ||
+          (dy < 0 && atTop && level !== 'peek')
+        );
+        if (!takes) {
+          gesture.mode = 'ignore';
+          return false;
+        }
+        gesture.mode = 'drag';
+        gesture.startY = y;
+        gesture.startHeight = visibleSheetHeight();
+        mainRef.current?.classList.add('is-sheet-dragging');
+      }
+      const elapsed = Math.max(1, time - gesture.lastTime);
+      gesture.velocity = gesture.velocity * 0.2 + ((gesture.lastY - y) / elapsed) * 0.8;
+      gesture.lastY = y;
+      gesture.lastTime = time;
+      writeHeight(rubberBandSheet(sheetHeightsRef.current, gesture.startHeight + (gesture.startY - y)));
+      return true;
+    };
+
+    const end = (y: number, time: number) => {
+      const gesture = sheetGestureRef.current;
+      sheetGestureRef.current = null;
+      if (!gesture || gesture.mode !== 'drag') return;
+      cancelAnimationFrame(sheetFrameRef.current);
+      // A finger that stopped before lifting shouldn't count as a flick.
+      const velocity = time - gesture.lastTime > 90 ? 0 : gesture.velocity;
+      const heights = sheetHeightsRef.current;
+      const next = nearestSheetLevel(heights, gesture.startHeight + (gesture.startY - y), velocity);
+      const main = mainRef.current;
+      main?.classList.remove('is-sheet-dragging');
+      main?.style.setProperty('--v2-mobile-panel-height', `${heights[next]}px`);
+      suppressSheetClickRef.current = true;
+      window.setTimeout(() => { suppressSheetClickRef.current = false; }, 0);
+      changeSheetLevel(next);
+    };
+
+    return { begin, move, end };
+  }, [changeSheetLevel]);
+
+  useEffect(() => {
+    const aside = asideRef.current;
+    if (!aside || !isMobileSheet) return;
+    const onTouchStart = (event: TouchEvent) => {
+      if (event.touches.length !== 1) {
+        sheetGesture.end(sheetGestureRef.current?.lastY ?? 0, event.timeStamp);
+        return;
+      }
+      const touch = event.touches[0];
+      sheetGesture.begin(event.target, touch.clientX, touch.clientY, event.timeStamp);
+    };
+    const onTouchMove = (event: TouchEvent) => {
+      const touch = event.touches[0];
+      if (!touch) return;
+      if (sheetGesture.move(touch.clientX, touch.clientY, event.timeStamp) && event.cancelable) event.preventDefault();
+    };
+    const onTouchEnd = (event: TouchEvent) => {
+      const touch = event.changedTouches[0];
+      sheetGesture.end(touch?.clientY ?? sheetGestureRef.current?.lastY ?? 0, event.timeStamp);
+    };
+    aside.addEventListener('touchstart', onTouchStart, { passive: true });
+    aside.addEventListener('touchmove', onTouchMove, { passive: false });
+    aside.addEventListener('touchend', onTouchEnd);
+    aside.addEventListener('touchcancel', onTouchEnd);
+    return () => {
+      aside.removeEventListener('touchstart', onTouchStart);
+      aside.removeEventListener('touchmove', onTouchMove);
+      aside.removeEventListener('touchend', onTouchEnd);
+      aside.removeEventListener('touchcancel', onTouchEnd);
+    };
+  }, [isMobileSheet, sheetGesture]);
+
+  // Mouse drags (narrow desktop windows) reuse the touch logic, limited to the grip areas.
+  const onSheetMouseDown = (event: ReactPointerEvent<HTMLElement>) => {
+    if (event.pointerType !== 'mouse' || event.button !== 0 || !(event.target as Element).closest(SHEET_GRIP_SELECTOR)) return;
+    sheetGesture.begin(event.target, event.clientX, event.clientY, event.timeStamp);
+    if (!sheetGestureRef.current) return;
+    const onMove = (moveEvent: PointerEvent) => {
+      if (sheetGesture.move(moveEvent.clientX, moveEvent.clientY, moveEvent.timeStamp)) moveEvent.preventDefault();
+    };
+    const onUp = (upEvent: PointerEvent) => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+      sheetGesture.end(upEvent.clientY, upEvent.timeStamp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
   };
 
   const openMobileSearch = () => {
@@ -1497,12 +2086,16 @@ export function DesignTwoMapScreen() {
   useEffect(() => {
     const map = mapRef.current;
     if (!mapReady || !map) return;
-    try {
-      map.setConfigProperty('basemap', 'show3dObjects', effectiveBuildings3d);
-    } catch {
-      // Styles without the Standard basemap import don't expose this config.
+    if (!map.isMoving()) {
+      setShow3dObjects(map, buildings3d);
+      return;
     }
-  }, [effectiveBuildings3d, mapReady]);
+    const applyWhenSettled = () => setShow3dObjects(map, buildings3dRef.current);
+    map.once('moveend', applyWhenSettled);
+    return () => {
+      map.off('moveend', applyWhenSettled);
+    };
+  }, [buildings3d, mapReady]);
 
   const skipFirst3dToggleEffect = useRef(true);
   useEffect(() => {
@@ -1517,7 +2110,7 @@ export function DesignTwoMapScreen() {
       map.easeTo({ pitch: 0, bearing: 0, duration: 320 });
       return;
     }
-    if (selectedPlaceRef.current && currentZoom >= BUILDINGS_3D_MIN_ZOOM) {
+    if (selectedPlaceRef.current && map.getZoom() >= BUILDINGS_3D_MIN_ZOOM) {
       focusPlaceCamera(map, selectedPlaceRef.current, true);
     }
   }, [buildings3d, mapReady]);
@@ -1525,8 +2118,16 @@ export function DesignTwoMapScreen() {
   useEffect(() => {
     if (selectedPlaceId || !lastSelectedIdRef.current) return;
     const row = document.getElementById(`v2-place-${lastSelectedIdRef.current}`);
-    if (!row) return;
-    row.scrollIntoView({ block: 'center' });
+    const list = row?.closest<HTMLElement>('.v2-results');
+    if (!row || !list) return;
+    // scrollIntoView would also scroll the clipped page and shove the map off screen.
+    const listRect = list.getBoundingClientRect();
+    const sheetTop = asideRef.current?.getBoundingClientRect().top ?? listRect.top;
+    // On mobile the lower part of the list sits below the screen; centre within the settled sheet.
+    const visibleHeight = isMobileSheetRef.current
+      ? sheetHeightsRef.current[sheetLevelRef.current] - (listRect.top - sheetTop)
+      : list.clientHeight;
+    list.scrollTop += row.getBoundingClientRect().top - listRect.top - (visibleHeight - row.offsetHeight) / 2;
     if (!document.activeElement || document.activeElement === document.body) {
       row.querySelector<HTMLButtonElement>('.v2-place-hit')?.focus({ preventScroll: true });
     }
@@ -1553,328 +2154,480 @@ export function DesignTwoMapScreen() {
     resetSelectionRoute();
   };
 
-  const freezeList = previewLoading && (loadingMode === 'list' || loadingMode === 'cities' || (loadingMode === 'all' && !selectedPlaceId));
+  const freezeList =
+    previewLoading &&
+    (loadingMode === 'list' || loadingMode === 'cities' || (loadingMode === 'all' && !selectedPlaceId));
   const cityPending = isCityPending || freezeList;
-  const detailPlace = selectedPlace ?? (loadingMode === 'photos' ? places[0] ?? null : null);
+  const detailPlace = selectedPlace ?? (loadingMode === 'photos' ? (places[0] ?? null) : null);
 
   if (!activeCity) {
-    return <main className="design-variant-two"><div className="v2-state-card" role="alert">No city guides found.</div></main>;
+    return (
+      <main className="design-variant-two">
+        <div
+          className="v2-state-card"
+          role="alert">
+          No city guides found.
+        </div>
+      </main>
+    );
   }
 
   return (
     <PreviewLoadingContext.Provider value={previewLoading}>
-    <main
-      ref={mainRef}
-      className="design-variant-two"
-      data-sheet={isMobileSheet ? sheetLevel : undefined}
-      style={isMobileSheet ? { '--v2-mobile-panel-height': `${sheetHeights[sheetLevel]}px` } as React.CSSProperties : undefined}
-    >
-      <div className={`v2-map-canvas${isCompactPins ? ' is-compact-pins' : ''}${selectedPlaceId ? ' has-selection' : ''}`} role="region" aria-label={`Map of curated places in ${activeCity.name}`}>
-        {MAPBOX_TOKEN ? (
-          <Map
-            mapboxAccessToken={MAPBOX_TOKEN}
-            mapStyle={MAPBOX_STYLE}
-            initialViewState={{
-              longitude: selectedPlace?.coordinates[0] ?? activeCity.center[0],
-              latitude: selectedPlace?.coordinates[1] ?? activeCity.center[1],
-              zoom: selectedPlace ? PLACE_ZOOM : CITY_ZOOM,
-              pitch: 0,
-              bearing: 0,
-              padding: getMapPadding()
-            }}
-            attributionControl={false}
-            logoPosition="bottom-right"
-            antialias={false}
-            failIfMajorPerformanceCaveat={false}
-            reuseMaps
-            config={{
-              basemap: {
-                lightPreset: 'day',
-                showPointOfInterestLabels: false,
-                showPlaceLabels: true,
-                showRoadLabels: true,
-                showTransitLabels: false,
-                show3dObjects: effectiveBuildings3d
-              }
-            }}
-            onLoad={(event) => {
-              mapRef.current = event.target;
-              event.target.setPadding(getMapPadding());
-              setCurrentZoom(event.target.getZoom());
-              setIsCompactPins(event.target.getZoom() < COMPACT_PIN_ZOOM);
-              setMapReady(true);
-              setMapError(null);
-              if (selectedPlace) focusPlaceCamera(event.target, selectedPlace, buildings3dRef.current);
-            }}
-            onZoomStart={(event) => {
-              if ('originalEvent' in event && event.originalEvent) isUserZoomingRef.current = true;
-            }}
-            onZoom={(event) => {
-              setCurrentZoom(event.viewState.zoom);
-              setIsCompactPins(event.viewState.zoom < COMPACT_PIN_ZOOM);
-            }}
-            onZoomEnd={(event) => {
-              setCurrentZoom(event.viewState.zoom);
-              setIsCompactPins(event.viewState.zoom < COMPACT_PIN_ZOOM);
-              if (!isUserZoomingRef.current) return;
-              isUserZoomingRef.current = false;
-              const map = mapRef.current;
-              if (!map) return;
-              if (buildings3dRef.current && selectedPlace && event.viewState.zoom >= BUILDINGS_3D_MIN_ZOOM) {
-                map.stop();
-                map.easeTo({
-                  pitch: PLACE_3D_PITCH,
-                  bearing: Math.abs(map.getBearing()) < 1 ? PLACE_3D_BEARING : map.getBearing(),
-                  duration: 260
-                });
-                return;
-              }
-              if (map.getPitch() > 0.5) {
-                map.stop();
-                map.easeTo({ pitch: 0, duration: 180 });
-              }
-            }}
-            onDragStart={() => {
-              setPreviewPlaceId(null);
-              if (isMobileSheet && sheetLevel === 'half' && !selectedPlaceId) changeSheetLevel('peek');
-            }}
-            onError={(event) => {
-              if (!mapRef.current?.loaded()) setMapError(event.error?.message ?? 'The map could not be loaded.');
-            }}
-          >
-            <NavigationControl position="top-right" showCompass={false} />
-            <Buildings3DControl enabled={buildings3d} active={effectiveBuildings3d} onToggle={toggleBuildings3d} />
-            <AttributionControl position="bottom-right" />
-            {visiblePlaces.map((place) => (
-              <Marker
-                key={place.id}
-                longitude={place.coordinates[0]}
-                latitude={place.coordinates[1]}
-                anchor="bottom"
-                style={{ zIndex: selectedPlaceId === place.id ? 3 : highlightedPlaceId === place.id || previewPlaceId === place.id ? 2 : 1 }}
-              >
-                <V2PlaceMarker
-                  place={place}
-                  selected={selectedPlaceId === place.id}
-                  highlighted={highlightedPlaceId === place.id || previewPlaceId === place.id}
-                  onSelect={() => selectPlace(place)}
-                  onHoverChange={(hovered) => previewOnHover(place.id, hovered)}
-                />
-              </Marker>
-            ))}
-            {previewPlace ? (
-              <Popup
-                key={previewPlace.id}
-                className="v2-map-popup v2-hover-popup"
-                anchor="bottom"
-                longitude={previewPlace.coordinates[0]}
-                latitude={previewPlace.coordinates[1]}
-                closeButton={false}
-                closeOnClick={false}
-                focusAfterOpen={false}
-                maxWidth="320px"
-                offset={isCompactPins ? 58 : 74}
-              >
-                <HoverPreview place={previewPlace} />
-              </Popup>
-            ) : null}
-          </Map>
-        ) : null}
-      </div>
-
-      <aside className={`v2-sidebar${!freezeList && detailPlace ? ' is-detail' : ''}`} aria-label={!freezeList && detailPlace ? detailPlace.title : `${activeCity.name} places`}>
-        {isMobileSheet ? (
-          <button
-            type="button"
-            className="v2-sheet-handle"
-            onClick={cycleSheet}
-            onPointerDown={onSheetPointerDown}
-            onPointerMove={onSheetPointerMove}
-            onPointerUp={onSheetPointerEnd}
-            onPointerCancel={onSheetPointerEnd}
-            aria-label={sheetHandleLabel}
-            aria-expanded={sheetLevel !== 'peek'}
-          >
-            <span />
-          </button>
-        ) : null}
-        {!freezeList && detailPlace ? (
-          <PlaceDetail
-            key={detailPlace.id}
-            place={detailPlace}
-            city={activeCity}
-            onBack={() => clearSelection()}
-            onOpenPhoto={(index) => setLightbox({ place: detailPlace, index })}
-          />
-        ) : (
-        <>
-        <header className="v2-sidebar-header">
-          <a className="v2-brand" href={cityPath(activeCity.id)} aria-label="Achetut home">
-            <AchetutLogo />
-            <span className="v2-edition">City guide</span>
-          </a>
-
-          <CitySelect
-            city={activeCity}
-            pending={cityPending}
-            onSelect={selectCity}
-            onOpen={() => { if (isMobileSheet && sheetLevel === 'peek') changeSheetLevel('half'); }}
-            forceOpen={loadingMode === 'cities'}
-            forceLoading={previewLoading}
-          />
-
-          {SHOW_SEARCH ? (
-            <button className="v2-sheet-search" type="button" onClick={openMobileSearch} aria-label="Search places">
-              <Icon name="search" />
-            </button>
-          ) : null}
-
-          <div className={`v2-title-row${cityPending ? ' is-pending' : ''}`}>
-            <div>
-              {cityPending ? (
-                <>
-                  <span className="v2-skel-line is-kicker" />
-                  <span className="v2-skel-line is-title" />
-                </>
-              ) : (
-                <>
-                  <p>{activeCity.country}</p>
-                  <h1>Places worth noticing</h1>
-                </>
-              )}
-            </div>
-            <output
-              className="v2-place-count"
-              role="status"
-              aria-atomic="true"
-              aria-label={cityPending ? 'Loading places' : `${visiblePlaces.length} places shown`}
-            >
-              {cityPending
-                ? <span className="v2-skel-line is-count" />
-                : <strong aria-hidden="true">{visiblePlaces.length}</strong>}
-            </output>
-          </div>
-
-          {SHOW_SEARCH ? (
-            <div
-              className={`v2-search${query ? ' has-value' : ''}`}
-              onMouseDown={(event) => {
-                if (event.target === event.currentTarget || (event.target as Element).closest('svg, kbd')) {
-                  event.preventDefault();
-                  searchRef.current?.focus();
+      <main
+        ref={mainRef}
+        className="design-variant-two"
+        data-sheet={isMobileSheet ? sheetLevel : undefined}
+        style={
+          isMobileSheet
+            ? ({
+                '--v2-mobile-panel-height': `${sheetHeights[sheetLevel]}px`,
+                '--v2-sheet-full': `${sheetHeights.full}px`,
+                '--v2-sheet-settled': `${sheetHeights[sheetLevel]}px`
+              } as React.CSSProperties)
+            : undefined
+        }>
+        <div
+          className={`v2-map-canvas${isCompactPins ? ' is-compact-pins' : ''}${selectedPlaceId ? ' has-selection' : ''}`}
+          role="region"
+          aria-label={`Map of curated places in ${activeCity.name}`}>
+          {MAPBOX_TOKEN ? (
+            <Map
+              mapboxAccessToken={MAPBOX_TOKEN}
+              mapStyle={MAPBOX_STYLE}
+              initialViewState={{
+                longitude: selectedPlace?.coordinates[0] ?? activeCity.center[0],
+                latitude: selectedPlace?.coordinates[1] ?? activeCity.center[1],
+                zoom: selectedPlace && buildings3d ? PLACE_3D_ZOOM : selectedPlace ? PLACE_ZOOM : CITY_ZOOM,
+                pitch: selectedPlace && buildings3d ? PLACE_3D_PITCH : 0,
+                bearing: selectedPlace && buildings3d ? PLACE_3D_BEARING : 0,
+                padding: getMapPadding()
+              }}
+              minZoom={9}
+              maxZoom={19}
+              maxPitch={65}
+              dragRotate={!isMobileSheet}
+              touchPitch={false}
+              fadeDuration={isMobileSheet ? 0 : 150}
+              attributionControl={false}
+              logoPosition="bottom-right"
+              antialias={false}
+              failIfMajorPerformanceCaveat={false}
+              reuseMaps
+              config={{
+                basemap: {
+                  lightPreset: 'day',
+                  theme: 'faded',
+                  font: 'Inter',
+                  colorLand: '#edf1ee',
+                  colorWater: '#c9dcda',
+                  colorGreenspace: '#d9e6dd',
+                  colorCommercial: '#ebe9e4',
+                  colorEducation: '#e7ebe8',
+                  colorMedical: '#efe6e4',
+                  colorIndustrial: '#dfe4e1',
+                  colorRoads: '#f8faf8',
+                  colorTrunks: '#f2f5f2',
+                  colorMotorways: '#e8ece9',
+                  colorBuildings: '#c9c0b7',
+                  colorPlaceLabels: '#17201e',
+                  colorRoadLabels: '#626e6a',
+                  showPointOfInterestLabels: false,
+                  showPlaceLabels: true,
+                  showRoadLabels: true,
+                  showPedestrianRoads: true,
+                  showTransitLabels: false,
+                  showAdminBoundaries: false,
+                  showLandmarkIcons: false,
+                  showLandmarkIconLabels: false,
+                  showIndoor: false,
+                  showIndoorLabels: false,
+                  show3dObjects: buildings3d,
+                  show3dBuildings: true,
+                  show3dLandmarks: true,
+                  show3dTrees: false,
+                  show3dFacades: false
                 }
               }}
-            >
-              <label htmlFor="v2-search-input" className="v2-visually-hidden">Search places</label>
-              <Icon name="search" />
-              <input
-                id="v2-search-input"
-                ref={searchRef}
-                type="search"
-                value={query}
-                onChange={(event) => {
-                  setQuery(event.target.value);
-                  if (selectedPlaceId) clearSelection(true);
-                }}
-                onKeyDown={(event) => {
-                  if (event.key === 'Escape' && query) {
-                    event.preventDefault();
-                    setQuery('');
-                  }
-                }}
-                placeholder="Search a place or architect"
-                autoComplete="off"
-                spellCheck={false}
+              onLoad={(event) => {
+                mapRef.current = event.target;
+                event.target.setPadding(getMapPadding());
+                const zoom = event.target.getZoom();
+                updateZoomModes(zoom);
+                applied3dObjects.set(event.target, buildings3dRef.current);
+                setMapViewportBounds(getBufferedMapBounds(event.target));
+                setMapReady(true);
+                setMapError(null);
+              }}
+              onMoveEnd={(event) => {
+                setMapViewportBounds(getBufferedMapBounds(event.target));
+              }}
+              onClick={() => {
+                if (isMobileSheet) changeSheetLevel('peek');
+                if (!selectedPlaceId) return;
+                setPreviewPlaceId(null);
+                setHighlightedPlaceId(null);
+                clearSelection();
+              }}
+              onZoomStart={(event) => {
+                if ('originalEvent' in event && event.originalEvent) isUserZoomingRef.current = true;
+              }}
+              onZoom={(event) => {
+                updateZoomModes(event.viewState.zoom);
+              }}
+              onZoomEnd={(event) => {
+                updateZoomModes(event.viewState.zoom);
+                if (!isUserZoomingRef.current) return;
+                isUserZoomingRef.current = false;
+                const map = mapRef.current;
+                if (!map) return;
+                if (buildings3dRef.current && selectedPlace && event.viewState.zoom >= BUILDINGS_3D_MIN_ZOOM) {
+                  map.stop();
+                  map.easeTo({
+                    pitch: PLACE_3D_PITCH,
+                    bearing: Math.abs(map.getBearing()) < 1 ? PLACE_3D_BEARING : map.getBearing(),
+                    duration: 260
+                  });
+                  return;
+                }
+                if (map.getPitch() > 0.5) {
+                  map.stop();
+                  map.easeTo({ pitch: 0, duration: 180 });
+                }
+              }}
+              onDragStart={() => {
+                setPreviewPlaceId(null);
+                if (isMobileSheet && sheetLevel === 'half' && !selectedPlaceId) changeSheetLevel('peek');
+              }}
+              onError={(event) => {
+                if (!mapRef.current?.loaded()) setMapError(event.error?.message ?? 'The map could not be loaded.');
+              }}>
+              <NavigationControl
+                position="top-right"
+                showCompass={false}
               />
-              {query ? (
-                <button
-                  className="v2-search-clear"
-                  type="button"
-                  onClick={() => { setQuery(''); searchRef.current?.focus(); }}
-                  aria-label="Clear search"
-                >
-                  <Icon name="close" />
-                </button>
-              ) : (
-                <kbd aria-hidden="true"><span>{SHORTCUT_MODIFIER}</span><span>K</span></kbd>
-              )}
-            </div>
+              <Buildings3DControl
+                enabled={buildings3d}
+                active={effectiveBuildings3d}
+                onToggle={toggleBuildings3d}
+              />
+              <AttributionControl position="bottom-right" />
+              {renderedMapPlaces.map((place) => {
+                const selected = selectedPlaceId === place.id;
+                const highlighted = highlightedPlaceId === place.id || previewPlaceId === place.id;
+                return (
+                  <MapPlaceMarker
+                    key={place.id}
+                    place={place}
+                    selected={selected}
+                    highlighted={highlighted}
+                    onSelect={selectPlace}
+                    onHoverChange={previewOnHover}
+                  />
+                );
+              })}
+              {previewPlace ? (
+                <Popup
+                  key={previewPlace.id}
+                  className="v2-map-popup v2-hover-popup"
+                  anchor="bottom"
+                  longitude={previewPlace.coordinates[0]}
+                  latitude={previewPlace.coordinates[1]}
+                  closeButton={false}
+                  closeOnClick={false}
+                  focusAfterOpen={false}
+                  maxWidth="320px"
+                  offset={isCompactPins ? 58 : 74}>
+                  <HoverPreview place={previewPlace} />
+                </Popup>
+              ) : null}
+            </Map>
           ) : null}
+        </div>
 
-          <div className="v2-filter-bar">
-            <div className="v2-filters" role="group" aria-label="Filter places by category">
-              {availableFilters.map((filter) => (
-                <button
-                  key={filter.value}
-                  className={activeCategory === filter.value ? 'is-active' : ''}
-                  type="button"
-                  onClick={() => changeCategory(filter.value)}
-                  aria-pressed={activeCategory === filter.value}
-                >
-                  {filter.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </header>
+        <aside
+          ref={asideRef}
+          className={`v2-sidebar${!freezeList && detailPlace ? ' is-detail' : ''}`}
+          aria-label={!freezeList && detailPlace ? detailPlace.title : `${activeCity.name} places`}
+          onPointerDown={isMobileSheet ? onSheetMouseDown : undefined}
+          onClickCapture={(event) => {
+            if (!suppressSheetClickRef.current) return;
+            suppressSheetClickRef.current = false;
+            event.preventDefault();
+            event.stopPropagation();
+          }}>
+          {isMobileSheet ? (
+            <button
+              type="button"
+              className="v2-sheet-handle"
+              onClick={cycleSheet}
+              onKeyDown={(event) => {
+                if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
+                event.preventDefault();
+                stepSheet(event.key === 'ArrowUp' ? 1 : -1);
+              }}
+              aria-label={sheetHandleLabel}
+              aria-expanded={sheetLevel !== 'peek'}>
+              <span />
+            </button>
+          ) : null}
+          {!freezeList && detailPlace ? (
+            <PlaceDetail
+              key={detailPlace.id}
+              place={detailPlace}
+              city={activeCity}
+              onBack={() => {
+                if (isMobileSheet) changeSheetLevel('half');
+                clearSelection();
+              }}
+              onOpenPhoto={(index) => setLightbox({ place: detailPlace, index })}
+            />
+          ) : (
+            <>
+              <header className="v2-sidebar-header">
+                <a
+                  className="v2-brand"
+                  href={cityPath(activeCity.id)}
+                  aria-label="Achetut home">
+                  <AchetutLogo />
+                  <span className="v2-edition">City guide</span>
+                </a>
 
-        <div className="v2-results" role="region" aria-label="Places list" aria-live="polite" aria-busy={isCityPending || freezeList}>
-          {isCityPending || freezeList ? (
-            <PlaceListSkeleton />
-          ) : visiblePlaces.length === 0 ? (
-            <div className="v2-empty">
-              <strong>No matching places</strong>
-              <span>{SHOW_SEARCH ? 'Try another category or a shorter search.' : 'Try another category.'}</span>
-              <button type="button" onClick={() => { setQuery(''); changeCategory('all'); }}>Show all places</button>
-            </div>
-          ) : visiblePlaces.map((place) => (
-              <article
-                key={place.id}
-                id={`v2-place-${place.id}`}
-                className={`v2-place-row${highlightedPlaceId === place.id || previewPlaceId === place.id ? ' is-highlighted' : ''}`}
-                onMouseEnter={() => setHighlightedPlaceId(place.id)}
-                onMouseLeave={() => setHighlightedPlaceId((current) => (current === place.id && previewPlaceId !== place.id ? null : current))}
-              >
-                <span className={`v2-place-thumb tone-${place.placeholderTone}`} aria-hidden="true">
-                  {place.photo ? <V2Image src={listPhotoUrl(place.photo)} /> : null}
-                </span>
-                <span className="v2-place-copy">
-                  <span className="v2-place-type"><i style={{ backgroundColor: CATEGORY_META[place.category].color }} />{CATEGORY_META[place.category].label}</span>
-                  <button className="v2-place-hit" type="button" onClick={() => selectPlace(place)}>
-                    <strong title={place.title}>{place.title}</strong>
+                <CitySelect
+                  city={activeCity}
+                  pending={cityPending}
+                  onSelect={selectCity}
+                  onOpen={() => {
+                    if (isMobileSheet && sheetLevel === 'peek') changeSheetLevel('half');
+                  }}
+                  forceOpen={loadingMode === 'cities'}
+                  forceLoading={previewLoading}
+                />
+
+                {SHOW_SEARCH ? (
+                  <button
+                    className="v2-sheet-search"
+                    type="button"
+                    onClick={openMobileSearch}
+                    aria-label="Search places">
+                    <Icon name="search" />
                   </button>
-                  <span className="v2-place-description" title={place.why}>{place.why}</span>
-                  {place.photo ? <PhotoCredit photo={place.photo} /> : null}
-                </span>
-              </article>
-            ))}
-        </div>
-        </>
+                ) : null}
+
+                <div className={`v2-title-row${cityPending ? ' is-pending' : ''}`}>
+                  <div>
+                    {cityPending ? (
+                      <>
+                        <span className="v2-skel-line is-kicker" />
+                        <span className="v2-skel-line is-title" />
+                      </>
+                    ) : (
+                      <>
+                        <p>{activeCity.country}</p>
+                        <h1>Places worth noticing</h1>
+                      </>
+                    )}
+                  </div>
+                  <output
+                    className="v2-place-count"
+                    role="status"
+                    aria-atomic="true"
+                    aria-label={cityPending ? 'Loading places' : `${visiblePlaces.length} places shown`}>
+                    {cityPending ? (
+                      <span className="v2-skel-line is-count" />
+                    ) : (
+                      <strong aria-hidden="true">{visiblePlaces.length}</strong>
+                    )}
+                  </output>
+                </div>
+
+                {SHOW_SEARCH ? (
+                  <div
+                    className={`v2-search${query ? ' has-value' : ''}`}
+                    onMouseDown={(event) => {
+                      if (event.target === event.currentTarget || (event.target as Element).closest('svg, kbd')) {
+                        event.preventDefault();
+                        searchRef.current?.focus();
+                      }
+                    }}>
+                    <label
+                      htmlFor="v2-search-input"
+                      className="v2-visually-hidden">
+                      Search places
+                    </label>
+                    <Icon name="search" />
+                    <input
+                      id="v2-search-input"
+                      ref={searchRef}
+                      type="search"
+                      value={query}
+                      onChange={(event) => {
+                        setQuery(event.target.value);
+                        if (selectedPlaceId) clearSelection(true);
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Escape' && query) {
+                          event.preventDefault();
+                          setQuery('');
+                        }
+                      }}
+                      placeholder="Search a place or architect"
+                      autoComplete="off"
+                      spellCheck={false}
+                    />
+                    {query ? (
+                      <button
+                        className="v2-search-clear"
+                        type="button"
+                        onClick={() => {
+                          setQuery('');
+                          searchRef.current?.focus();
+                        }}
+                        aria-label="Clear search">
+                        <Icon name="close" />
+                      </button>
+                    ) : (
+                      <kbd aria-hidden="true">
+                        <span>{SHORTCUT_MODIFIER}</span>
+                        <span>K</span>
+                      </kbd>
+                    )}
+                  </div>
+                ) : null}
+
+                <div className="v2-filter-bar">
+                  <div
+                    className="v2-filters"
+                    role="group"
+                    aria-label="Filter places by category">
+                    {availableFilters.map((filter) => (
+                      <button
+                        key={filter.value}
+                        className={activeCategory === filter.value ? 'is-active' : ''}
+                        type="button"
+                        onClick={() => changeCategory(filter.value)}
+                        aria-pressed={activeCategory === filter.value}>
+                        {filter.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </header>
+
+              <div
+                className="v2-results"
+                role="region"
+                aria-label="Places list"
+                aria-live="polite"
+                aria-busy={isCityPending || freezeList}>
+                {isCityPending || freezeList ? (
+                  <PlaceListSkeleton />
+                ) : visiblePlaces.length === 0 ? (
+                  <div className="v2-empty">
+                    <strong>No matching places</strong>
+                    <span>{SHOW_SEARCH ? 'Try another category or a shorter search.' : 'Try another category.'}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setQuery('');
+                        changeCategory('all');
+                      }}>
+                      Show all places
+                    </button>
+                  </div>
+                ) : (
+                  visiblePlaces.map((place) => (
+                    <article
+                      key={place.id}
+                      id={`v2-place-${place.id}`}
+                      className={`v2-place-row${highlightedPlaceId === place.id || previewPlaceId === place.id ? ' is-highlighted' : ''}`}
+                      onMouseEnter={() => setHighlightedPlaceId(place.id)}
+                      onMouseLeave={() =>
+                        setHighlightedPlaceId((current) =>
+                          current === place.id && previewPlaceId !== place.id ? null : current
+                        )
+                      }>
+                      <span
+                        className={`v2-place-thumb tone-${place.placeholderTone}`}
+                        aria-hidden="true">
+                        {place.photo ? <V2Image src={listPhotoUrl(place.photo)} /> : null}
+                      </span>
+                      <span className="v2-place-copy">
+                        <span className="v2-place-type">
+                          <i style={{ backgroundColor: CATEGORY_META[place.category].color }} />
+                          {CATEGORY_META[place.category].label}
+                        </span>
+                        <button
+                          className="v2-place-hit"
+                          type="button"
+                          onClick={() => selectPlace(place)}>
+                          <strong title={place.title}>{place.title}</strong>
+                        </button>
+                        <span
+                          className="v2-place-description"
+                          title={place.why}>
+                          {place.why}
+                        </span>
+                        {place.photo ? <PhotoCredit photo={place.photo} /> : null}
+                      </span>
+                    </article>
+                  ))
+                )}
+              </div>
+            </>
+          )}
+
+          <footer className="v2-sidebar-footer">
+            <a href="/privacy">Privacy policy</a>
+          </footer>
+        </aside>
+
+        {!MAPBOX_TOKEN && (
+          <div
+            className="v2-state-card"
+            role="status">
+            <strong>Map preview is unavailable</strong>
+            <span>
+              Add <code>VITE_MAPBOX_ACCESS_TOKEN</code> to <code>.env</code>. The guide remains available.
+            </span>
+          </div>
         )}
-
-        <footer className="v2-sidebar-footer">
-          <a href="/privacy">Privacy policy</a>
-        </footer>
-      </aside>
-
-      {!MAPBOX_TOKEN && (
-        <div className="v2-state-card" role="status">
-          <strong>Map preview is unavailable</strong>
-          <span>Add <code>VITE_MAPBOX_ACCESS_TOKEN</code> to <code>.env</code>. The guide remains available.</span>
-        </div>
-      )}
-      {MAPBOX_TOKEN && !mapError && (!mapReady || previewLoading) && <div className="v2-loading" role="status"><span /> Loading map…</div>}
-      {mapError && MAPBOX_TOKEN && (
-        <div className="v2-state-card" role="alert">
-          <strong>The map could not be loaded</strong>
-          <span>{mapError}</span>
-          <button type="button" onClick={() => window.location.reload()}>Retry</button>
-        </div>
-      )}
-      {!isOnline && <div className="v2-offline" role="status">Offline — showing cached guide content</div>}
-      {lightbox?.place.photo ? <PhotoLightbox place={lightbox.place} city={activeCity} initialIndex={lightbox.index} onClose={closeLightbox} /> : null}
-
-    </main>
+        {MAPBOX_TOKEN && !mapError && (!mapReady || previewLoading) && (
+          <div
+            className="v2-loading"
+            role="status">
+            <span /> Loading map…
+          </div>
+        )}
+        {mapError && MAPBOX_TOKEN && (
+          <div
+            className="v2-state-card"
+            role="alert">
+            <strong>The map could not be loaded</strong>
+            <span>{mapError}</span>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}>
+              Retry
+            </button>
+          </div>
+        )}
+        {!isOnline && (
+          <div
+            className="v2-offline"
+            role="status">
+            Offline — showing cached guide content
+          </div>
+        )}
+        {lightbox?.place.photo ? (
+          <PhotoLightbox
+            place={lightbox.place}
+            city={activeCity}
+            initialIndex={lightbox.index}
+            onClose={closeLightbox}
+          />
+        ) : null}
+      </main>
     </PreviewLoadingContext.Provider>
   );
 }

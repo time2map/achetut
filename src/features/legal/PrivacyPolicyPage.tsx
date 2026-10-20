@@ -4,8 +4,8 @@ export function PrivacyPolicyPage() {
   return (
     <main className="privacy-page" id="main-content">
       <header className="privacy-header">
-        <a className="privacy-brand" href="/design-1" aria-label="Back to Achetut">Achetut</a>
-        <a className="privacy-back" href="/design-1">Back to the map</a>
+        <a className="privacy-brand" href="/" aria-label="Back to Achetut">Achetut</a>
+        <a className="privacy-back" href="/">Back to the map</a>
       </header>
 
       <article className="privacy-document">
