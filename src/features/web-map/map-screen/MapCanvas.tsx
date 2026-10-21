@@ -8,7 +8,6 @@ import {
   MAPBOX_TOKEN,
   PLACE_3D_BEARING,
   PLACE_3D_PITCH,
-  PLACE_3D_ZOOM,
   PLACE_ZOOM,
   BUILDINGS_3D_MIN_ZOOM,
   type MapViewportBounds,
@@ -17,7 +16,8 @@ import {
 import {
   applied3dObjects,
   getBufferedMapBounds,
-  getMapPadding
+  getMapPadding,
+  getPlace3dZoom
 } from './mapCamera';
 import { Buildings3DControl, HoverPreview, MapPlaceMarker } from './MapMarkers';
 
@@ -86,7 +86,7 @@ export function MapCanvas({
           initialViewState={{
             longitude: selectedPlace?.coordinates[0] ?? activeCity.center[0],
             latitude: selectedPlace?.coordinates[1] ?? activeCity.center[1],
-            zoom: selectedPlace && buildings3d ? PLACE_3D_ZOOM : selectedPlace ? PLACE_ZOOM : CITY_ZOOM,
+            zoom: selectedPlace && buildings3d ? getPlace3dZoom() : selectedPlace ? PLACE_ZOOM : CITY_ZOOM,
             pitch: selectedPlace && buildings3d ? PLACE_3D_PITCH : 0,
             bearing: selectedPlace && buildings3d ? PLACE_3D_BEARING : 0,
             padding: getMapPadding()

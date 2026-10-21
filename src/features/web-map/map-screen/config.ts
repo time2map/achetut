@@ -7,6 +7,7 @@ export const MAPBOX_STYLE = env.mapboxStyle;
 export const CITY_ZOOM = 12.35;
 export const PLACE_ZOOM = 14.6;
 export const PLACE_3D_ZOOM = 18;
+export const PLACE_3D_ZOOM_MOBILE = 16.5;
 export const PLACE_3D_PITCH = 62;
 export const PLACE_3D_BEARING = -20;
 export const COMPACT_PIN_ZOOM = 13;

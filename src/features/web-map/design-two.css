@@ -1622,11 +1622,13 @@ button.v2-popup-media:hover img { transform: scale(1.04); }
   .v2-filter-bar::-webkit-scrollbar { display: none; }
   .v2-filters { display: contents; }
   .v2-filters button {
+    position: relative;
     flex: 0 0 auto;
-    min-height: 44px;
-    padding: 7px 15px;
-    font-size: 13px;
+    min-height: 38px;
+    padding: 5px 13px;
+    font-size: 12px;
   }
+  .v2-filters button::after { content: ''; position: absolute; inset: -3px 0; }
 
   .v2-sidebar-footer { min-height: 44px; padding: 0 16px; justify-content: flex-start; }
   [data-sheet="peek"] .v2-sidebar-footer,
@@ -1804,6 +1806,7 @@ button.v2-popup-media:hover img { transform: scale(1.04); }
   .v2-sidebar-header { padding-top: 20px; padding-bottom: 6px; }
   .v2-filter-bar { margin-top: 4px; }
   .v2-filters button { min-height: 34px; }
+  .v2-filters button::after { inset-block: -5px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

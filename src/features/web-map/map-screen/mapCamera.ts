@@ -6,6 +6,7 @@ import {
   PLACE_3D_BEARING,
   PLACE_3D_PITCH,
   PLACE_3D_ZOOM,
+  PLACE_3D_ZOOM_MOBILE,
   PLACE_ZOOM,
   type MapViewportBounds,
   type SheetHeights,
@@ -52,6 +53,11 @@ export function setPaddingKeepingView(map: MapboxMap, padding: ReturnType<typeof
   const x = (padding.left + container.clientWidth - padding.right) / 2;
   const y = (padding.top + container.clientHeight - padding.bottom) / 2;
   map.jumpTo({ center: map.unproject([x, y]), padding });
+}
+
+// The mobile map strip above the sheet is short, so the desktop zoom crops the surroundings.
+export function getPlace3dZoom() {
+  return window.innerWidth < MOBILE_QUERY_WIDTH ? PLACE_3D_ZOOM_MOBILE : PLACE_3D_ZOOM;
 }
 
 export function getBufferedMapBounds(map: MapboxMap): MapViewportBounds | null {
@@ -104,7 +110,7 @@ export function focusPlaceCamera(map: MapboxMap, place: CuratedPlace, buildings3
   map.flyTo({
     center: place.coordinates,
     // Keep a closer zoom if the user already zoomed in further than the place default.
-    zoom: Math.max(map.getZoom(), PLACE_3D_ZOOM),
+    zoom: Math.max(map.getZoom(), getPlace3dZoom()),
     pitch: PLACE_3D_PITCH,
     bearing,
     padding: { ...padding, top: padding.top + headroom },
