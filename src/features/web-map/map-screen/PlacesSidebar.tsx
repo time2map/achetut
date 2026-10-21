@@ -1,4 +1,4 @@
-import type { Ref, RefObject } from 'react';
+import type { CSSProperties, Ref, RefObject } from 'react';
 import { AchetutLogo } from '../AchetutLogo';
 import { CATEGORY_META, type CuratedCity, type CuratedPlace } from '../places';
 import { CitySelect } from './CitySelect';
@@ -221,6 +221,11 @@ export function PlacesSidebar({
                   <button
                     key={filter.value}
                     className={activeCategory === filter.value ? 'is-active' : ''}
+                    style={
+                      filter.value === 'all'
+                        ? undefined
+                        : ({ '--chip-color': CATEGORY_META[filter.value].color } as CSSProperties)
+                    }
                     type="button"
                     onClick={() => onChangeCategory(filter.value)}
                     aria-pressed={activeCategory === filter.value}>

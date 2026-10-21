@@ -411,21 +411,39 @@
 }
 .v2-filters button {
   min-height: 36px;
-  padding: 7px 12px;
-  border: 1px solid var(--v2-line);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 14px;
+  border: 1px solid color-mix(in srgb, var(--chip-color, var(--v2-ink)) 24%, var(--v2-line));
   border-radius: 999px;
-  color: var(--v2-ink-soft);
-  background: var(--v2-surface);
+  color: color-mix(in srgb, var(--chip-color, var(--v2-ink)) 82%, var(--v2-ink));
+  background: color-mix(in srgb, var(--chip-color, var(--v2-ink)) 9%, var(--v2-surface));
   font-size: 12px;
   font-weight: 650;
+  white-space: nowrap;
   cursor: pointer;
-  transition: color 150ms ease, border-color 150ms ease, background-color 150ms ease;
+  transition: color 150ms ease, border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease, transform 100ms ease;
 }
-.v2-filters button:hover { border-color: var(--v2-line-strong); color: var(--v2-ink); background: var(--v2-surface-muted); }
 .v2-filters button.is-active {
-  border-color: var(--v2-ink);
-  color: var(--v2-surface);
-  background: var(--v2-ink);
+  border-color: transparent;
+  color: #fff;
+  background: var(--chip-color, var(--v2-ink));
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--chip-color, var(--v2-ink)) 24%, transparent), inset 0 0 0 1px rgba(255, 255, 255, .14);
+  font-weight: 720;
+}
+.v2-filters button:active { transform: translateY(1px); }
+@media (hover: hover) {
+  .v2-filters button:not(.is-active):hover {
+    border-color: color-mix(in srgb, var(--chip-color, var(--v2-ink)) 42%, var(--v2-line));
+    color: color-mix(in srgb, var(--chip-color, var(--v2-ink)) 88%, var(--v2-ink));
+    background: color-mix(in srgb, var(--chip-color, var(--v2-ink)) 15%, var(--v2-surface));
+  }
+  .v2-filters button.is-active:hover {
+    color: #fff;
+    background: color-mix(in srgb, var(--chip-color, var(--v2-ink)) 88%, black);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--chip-color, var(--v2-ink)) 30%, transparent), inset 0 0 0 1px rgba(255, 255, 255, .16);
+  }
 }
 
 @media (min-width: 820px) {
@@ -461,7 +479,7 @@
     gap: 6px;
     margin: 12px 0 0;
   }
-  .v2-filters button { flex: 0 0 auto; min-height: 32px; padding: 5px 11px; }
+  .v2-filters button { flex: 0 0 auto; min-height: 34px; padding: 5px 12px; }
 
   .v2-title-row {
     grid-area: title;
@@ -1605,8 +1623,8 @@ button.v2-popup-media:hover img { transform: scale(1.04); }
   .v2-filters { display: contents; }
   .v2-filters button {
     flex: 0 0 auto;
-    min-height: 38px;
-    padding: 6px 13px;
+    min-height: 44px;
+    padding: 7px 15px;
     font-size: 13px;
   }
 
