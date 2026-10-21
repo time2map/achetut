@@ -25,6 +25,7 @@ import {
   type CategoryFilter,
   type MapViewportBounds
 } from './map-screen/config';
+import { isKeyboardNavigation } from './map-screen/inputModality';
 import { MapCanvas } from './map-screen/MapCanvas';
 import {
   focusCityCamera,
@@ -312,7 +313,7 @@ export function MapScreen() {
       ? sheetHeightsRef.current[sheetLevelRef.current]! - (listRect.top - sheetTop)
       : list.clientHeight;
     list.scrollTop += row.getBoundingClientRect().top - listRect.top - (visibleHeight - row.offsetHeight) / 2;
-    if (!document.activeElement || document.activeElement === document.body) {
+    if (isKeyboardNavigation() && (!document.activeElement || document.activeElement === document.body)) {
       row.querySelector<HTMLButtonElement>('.v2-place-hit')?.focus({ preventScroll: true });
     }
   }, [asideRef, isMobileSheetRef, selectedPlaceId, sheetHeightsRef, sheetLevelRef]);

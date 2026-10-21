@@ -60,16 +60,30 @@ export function getPlace3dZoom() {
   return window.innerWidth < MOBILE_QUERY_WIDTH ? PLACE_3D_ZOOM_MOBILE : PLACE_3D_ZOOM;
 }
 
+// map.getBounds() only covers the area inside the camera padding, which on mobile
+// excludes everything behind the sheet, so use the whole container instead.
 export function getBufferedMapBounds(map: MapboxMap): MapViewportBounds | null {
-  const bounds = map.getBounds();
-  if (!bounds) return null;
-  const longitudePadding = (bounds.getEast() - bounds.getWest()) * 0.2;
-  const latitudePadding = (bounds.getNorth() - bounds.getSouth()) * 0.2;
+  const container = map.getContainer();
+  const width = container.clientWidth;
+  const height = container.clientHeight;
+  if (!width || !height) return null;
+  const corners = [
+    map.unproject([0, 0]),
+    map.unproject([width, 0]),
+    map.unproject([0, height]),
+    map.unproject([width, height])
+  ];
+  const west = Math.min(...corners.map((corner) => corner.lng));
+  const east = Math.max(...corners.map((corner) => corner.lng));
+  const south = Math.min(...corners.map((corner) => corner.lat));
+  const north = Math.max(...corners.map((corner) => corner.lat));
+  const longitudePadding = (east - west) * 0.2;
+  const latitudePadding = (north - south) * 0.2;
   return {
-    west: bounds.getWest() - longitudePadding,
-    south: bounds.getSouth() - latitudePadding,
-    east: bounds.getEast() + longitudePadding,
-    north: bounds.getNorth() + latitudePadding
+    west: west - longitudePadding,
+    south: south - latitudePadding,
+    east: east + longitudePadding,
+    north: north + latitudePadding
   };
 }
 

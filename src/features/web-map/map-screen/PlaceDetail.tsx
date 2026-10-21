@@ -6,6 +6,7 @@ import {
   type PointerEvent as ReactPointerEvent
 } from 'react';
 import { CATEGORY_META, type CuratedCity, type CuratedPlace } from '../places';
+import { isKeyboardNavigation } from './inputModality';
 import { commonsSearchUrl, googleMapsUrl, uniqueSources } from './photoUtils';
 import { Icon, PhotoCredit, V2Image } from './ui';
 
@@ -84,6 +85,7 @@ export function PlaceDetail({
 
   useEffect(() => {
     // A list click unmounts the clicked row; keep keyboard focus inside the panel.
+    if (!isKeyboardNavigation()) return;
     if (!document.activeElement || document.activeElement === document.body)
       backRef.current?.focus({ preventScroll: true });
   }, []);
