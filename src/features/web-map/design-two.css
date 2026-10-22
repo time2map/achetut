@@ -1150,13 +1150,31 @@
   background: var(--pin-color);
   box-shadow: 0 0 0 2px #fff, 0 2px 8px rgba(23, 32, 30, .28);
 }
-.v2-map-canvas.has-selection .v2-pin:not(.is-selected) {
-  opacity: .38;
-  pointer-events: auto;
+/* Dimmed pins stay opaque (an opacity fade lets overlapping pins show through each other);
+   the fade is faked with a white veil and lightened frame colours instead. */
+.v2-pin-photo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--v2-surface);
+  opacity: 0;
+  transition: opacity 180ms ease;
 }
-.v2-map-canvas.has-selection .v2-pin.is-highlighted:not(.is-selected) {
-  opacity: .78;
+.v2-map-canvas.has-selection .v2-pin:not(.is-selected) { --pin-dim: 62%; --pin-veil: .62; pointer-events: auto; }
+.v2-map-canvas.has-selection .v2-pin.is-highlighted:not(.is-selected) { --pin-dim: 22%; --pin-veil: .22; }
+.v2-map-canvas.has-selection .v2-pin:not(.is-selected) .v2-pin-photo::after { opacity: var(--pin-veil); }
+.v2-map-canvas.has-selection .v2-pin:not(.is-selected) .v2-pin-frame {
+  border-color: color-mix(in srgb, var(--pin-color), var(--v2-surface) var(--pin-dim));
+  box-shadow: none;
 }
+.v2-map-canvas.has-selection .v2-pin:not(.is-selected) .v2-pin-tail {
+  background: color-mix(in srgb, var(--pin-color), var(--v2-surface) var(--pin-dim));
+}
+.v2-map-canvas.has-selection .v2-pin:not(.is-selected) .v2-pin-body {
+  filter: drop-shadow(0 2px 3px rgba(42, 34, 28, .14));
+}
+.v2-map-canvas.has-selection .v2-pin:not(.is-selected) .v2-pin-ground { opacity: .4; }
 
 .is-compact-pins .v2-pin:not(.is-selected) .v2-pin-body { transform: scale(.76); }
 
@@ -1172,7 +1190,7 @@
   .v2-pin:not(.is-selected):hover { z-index: 2; }
   .v2-pin:not(.is-selected):hover .v2-pin-body { transform: translateY(-2px) scale(1.1); }
   .is-compact-pins .v2-pin:not(.is-selected):hover .v2-pin-body { transform: translateY(-1px) scale(.86); }
-  .v2-map-canvas.has-selection .v2-pin:not(.is-selected):hover { opacity: .88; }
+  .v2-map-canvas.has-selection .v2-pin:not(.is-selected):hover { --pin-dim: 12%; --pin-veil: .12; }
 }
 
 /* One map popup carries the full place context; map markers stay lightweight. */
