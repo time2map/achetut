@@ -1,26 +1,24 @@
-FROM node:20-alpine
-
+# Сборка статики: Vite → /app/dist
+FROM node:22-alpine AS build
 WORKDIR /app
 
 COPY package*.json ./
 RUN npm ci
 
 COPY . .
+
+# Адрес API зашивается в бандл на сборке, поэтому это build-arg, а не env контейнера.
+ARG VITE_ARCHI2GO_BACK_URL=https://archi2api.time2map.com
 ARG VITE_MAPBOX_ACCESS_TOKEN
 ARG VITE_MAPBOX_STYLE=mapbox://styles/mapbox/standard
-ENV VITE_MAPBOX_ACCESS_TOKEN=${VITE_MAPBOX_ACCESS_TOKEN}
-ENV VITE_MAPBOX_STYLE=${VITE_MAPBOX_STYLE}
+ENV VITE_ARCHI2GO_BACK_URL=$VITE_ARCHI2GO_BACK_URL \
+    VITE_MAPBOX_ACCESS_TOKEN=$VITE_MAPBOX_ACCESS_TOKEN \
+    VITE_MAPBOX_STYLE=$VITE_MAPBOX_STYLE
+
 RUN npm run build
 
-ARG USER_ID=10002
-ARG GROUP_ID=10002
-RUN addgroup -g ${GROUP_ID} -S nodejs && \
-    adduser -S nodeuser -u ${USER_ID} -G nodejs && \
-    chown -R nodeuser:nodejs /app
-
-USER nodeuser
-
-ENV WEB_PORT=8081
-EXPOSE 8081
-
-CMD ["sh", "-c", "npm run preview -- --host 0.0.0.0 --port ${WEB_PORT}"]
+# Рантайм: nginx раздаёт dist с SPA-fallback (клиентские маршруты /design-1/:cityId)
+FROM nginx:1.27-alpine AS runtime
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/dist /usr/share/nginx/html
+EXPOSE 8080

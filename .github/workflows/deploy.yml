@@ -1,0 +1,85 @@
+name: Deploy web
+
+# Боевой сайт archi2go.time2map.com. Ветка web-version — боевая; main занята документацией.
+# Деплой идёт на self-hosted раннере, установленном на том же сервере (72.56.100.61), что и
+# бэкенд: образ собирается и поднимается docker compose локально, реестр не нужен.
+on:
+  push:
+    branches: [web-version]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Деплои по одному, без отмены начатого: иначе два `compose up` подерутся за контейнер.
+concurrency:
+  group: deploy-web-production
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  deploy:
+    name: archi2go.time2map.com
+    runs-on: [self-hosted, archi2go-web]
+    environment:
+      name: production
+      url: https://archi2go.time2map.com
+    env:
+      WEB_PORT: '8081'
+      IMAGE_TAG: 'achetut-web:${{ github.sha }}'
+      VITE_ARCHI2GO_BACK_URL: 'https://archi2api.time2map.com'
+      VITE_MAPBOX_STYLE: 'mapbox://styles/mapbox/standard'
+      VITE_MAPBOX_ACCESS_TOKEN: ${{ secrets.VITE_MAPBOX_ACCESS_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Проверить входные данные сборки
+        run: |
+          if [ -z "${VITE_MAPBOX_ACCESS_TOKEN}" ]; then
+            echo "::error::Секрет VITE_MAPBOX_ACCESS_TOKEN не задан. Добавить: gh secret set VITE_MAPBOX_ACCESS_TOKEN -R time2map/achetut"
+            exit 1
+          fi
+
+      # Сборка до остановки старого контейнера: если она упадёт, сайт продолжает работать.
+      - name: Собрать образ
+        run: docker compose build
+
+      - name: Выкатить
+        run: |
+          docker compose up -d --remove-orphans
+          docker compose ps
+
+      - name: Дождаться ответа сайта
+        run: |
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:${WEB_PORT}/" || true)
+            if [ "$code" = "200" ]; then
+              echo "Сайт отвечает 200 (попытка $i)"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::Сайт не ответил 200 за 60 секунд"
+          docker compose logs web-app --tail 100
+          exit 1
+
+      # API-адрес зашит в бандл на сборке: проверяем, что выкатился именно он, а не дефолт из кода.
+      - name: Проверить адрес API в бандле
+        run: |
+          api=$(docker compose exec -T web-app grep -rhoE 'https://archi2api\.time2map\.com' /usr/share/nginx/html/assets | head -1 || true)
+          if [ -z "$api" ]; then
+            echo "::error::В собранном бандле нет https://archi2api.time2map.com"
+            exit 1
+          fi
+          echo "API в бандле: ${api}"
+
+      - name: Убрать старые образы
+        if: always()
+        run: |
+          docker image prune -f >/dev/null 2>&1 || true
+          docker images achetut-web --format '{{.ID}} {{.CreatedAt}}' \
+            | sort -k2 -r | tail -n +4 | awk '{print $1}' \
+            | xargs -r docker image rm -f >/dev/null 2>&1 || true

@@ -60,3 +60,30 @@ src/
   styles/index.css           # Tailwind and global document styles
   top/                       # curated city and place data
 ```
+
+## Deployment
+
+Production: <https://archi2go.time2map.com>, API: <https://archi2api.time2map.com>.
+
+`.github/workflows/deploy.yml` builds the image and runs `docker compose up -d` on a self-hosted
+GitHub runner installed on the server itself (labels `self-hosted,archi2go-web`), so no registry is
+involved. It runs on every push to `web-version` and by hand via Actions → Deploy web → Run workflow.
+
+One-time setup:
+
+```bash
+gh secret set VITE_MAPBOX_ACCESS_TOKEN -R time2map/achetut   # the map does not render without it
+```
+
+The API URL is baked into the bundle at build time (`VITE_ARCHI2GO_BACK_URL` in the workflow), so
+the backend must allow the site origin in `CORS_ORIGINS`. The container `achetut-web` serves the SPA
+on `127.0.0.1:8081` (nginx, SPA fallback, no-cache `index.html`); the host nginx terminates TLS for
+`archi2go.time2map.com` and proxies to that port.
+
+Verification after a deploy:
+
+```bash
+curl -fsS -o /dev/null -w '%{http_code}\n' https://archi2go.time2map.com/
+curl -fsS https://archi2api.time2map.com/api/cities | head -c 120
+docker logs achetut-web --tail 20    # on the server
+```
