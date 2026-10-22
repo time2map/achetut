@@ -148,17 +148,23 @@
   justify-content: space-between;
   gap: 16px;
   color: inherit;
-  text-decoration: none;
 }
-.design-variant-two .achetut-logo {
+.design-variant-two .archi2go-logo {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: var(--v2-accent);
+  color: var(--v2-ink);
   white-space: nowrap;
 }
-.design-variant-two .achetut-logo svg { width: 34px; height: 35px; flex: 0 0 auto; }
-.design-variant-two .achetut-logo > span { font-size: 24px; font-weight: 740; letter-spacing: -.045em; }
+.design-variant-two .archi2go-mark {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  color: inherit;
+}
+.design-variant-two .archi2go-mark svg { width: 38px; height: 39px; }
+.design-variant-two .archi2go-logo > span { font-size: 23px; font-weight: 760; line-height: 1; letter-spacing: -.04em; }
+.design-variant-two .archi2go-logo em { margin: 0 .01em; color: inherit; font-style: normal; }
 .v2-edition {
   color: var(--v2-muted);
   font-size: 12px;
@@ -460,8 +466,9 @@
   }
   .v2-brand { grid-area: brand; }
   .v2-edition { display: none; }
-  .design-variant-two .v2-brand .achetut-logo svg { width: 28px; height: 29px; }
-  .design-variant-two .v2-brand .achetut-logo > span { font-size: 21px; }
+  .design-variant-two .v2-brand .archi2go-logo { gap: 8px; }
+  .design-variant-two .v2-brand .archi2go-mark svg { width: 31px; height: 32px; }
+  .design-variant-two .v2-brand .archi2go-logo > span { font-size: 21px; }
 
   .v2-city-select { grid-area: city; width: 100%; margin: 0; }
   .v2-city-trigger { min-height: 44px; grid-template-columns: 30px minmax(0, 1fr) 18px; gap: 9px; padding: 0 10px 0 7px; }

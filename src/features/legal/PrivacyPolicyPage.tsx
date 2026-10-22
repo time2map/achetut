@@ -4,7 +4,7 @@ export function PrivacyPolicyPage() {
   return (
     <main className="privacy-page" id="main-content">
       <header className="privacy-header">
-        <a className="privacy-brand" href="/" aria-label="Back to Achetut">Achetut</a>
+        <a className="privacy-brand" href="/" aria-label="Back to Archi2go">Archi2go</a>
         <a className="privacy-back" href="/">Back to the map</a>
       </header>
 
@@ -14,13 +14,13 @@ export function PrivacyPolicyPage() {
         <p className="privacy-updated">Effective 15 October 2026</p>
 
         <p className="privacy-lead">
-          Achetut is a curated city-guide web application. This policy explains what information the current web application uses and which external services are involved when you explore the map.
+          Archi2go is a curated city-guide web application. This policy explains what information the current web application uses and which external services are involved when you explore the map.
         </p>
 
         <section>
           <h2>Information stored on your device</h2>
           <p>
-            Achetut stores your last selected city in your browser’s local storage so the guide can reopen in the same place. This preference remains on your device until you clear your browser data. The application does not currently provide user accounts or use first-party advertising or analytics cookies.
+            Archi2go stores your last selected city in your browser’s local storage so the guide can reopen in the same place. This preference remains on your device until you clear your browser data. The application does not currently provide user accounts or use first-party advertising or analytics cookies.
           </p>
         </section>
 
@@ -41,7 +41,7 @@ export function PrivacyPolicyPage() {
         <section>
           <h2>External links</h2>
           <p>
-            Achetut contains links to Google Maps, publishers, architects’ resources and photo licensing pages. When you follow one of these links, the destination service processes data according to its own policy. Achetut does not control those external websites.
+            Archi2go contains links to Google Maps, publishers, architects’ resources and photo licensing pages. When you follow one of these links, the destination service processes data according to its own policy. Archi2go does not control those external websites.
           </p>
           <p><a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer">Google privacy policy</a></p>
         </section>

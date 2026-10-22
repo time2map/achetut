@@ -4,7 +4,7 @@ stages:
 variables:
   DOCKER_DRIVER: overlay2
   DOCKER_TLS_CERTDIR: ''
-  IMAGE_TAG: '$CI_REGISTRY_IMAGE:achetut-web-$CI_COMMIT_SHORT_SHA'
+  IMAGE_TAG: '$CI_REGISTRY_IMAGE:archi2go-web-$CI_COMMIT_SHORT_SHA'
   VITE_MAPBOX_STYLE: 'mapbox://styles/mapbox/standard'
 
 .deploy-web:

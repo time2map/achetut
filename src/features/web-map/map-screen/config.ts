@@ -13,13 +13,16 @@ export const PLACE_3D_BEARING = -20;
 export const COMPACT_PIN_ZOOM = 13;
 export const HOVER_PREVIEW_QUERY = '(hover: hover) and (pointer: fine) and (min-width: 820px)';
 export const BUILDINGS_3D_MIN_ZOOM = 15.2;
-export const BUILDINGS_3D_STORAGE_KEY = 'achetut-3d-v2';
+export const BUILDINGS_3D_STORAGE_KEY = 'archi2go-3d-v2';
 export const MOBILE_QUERY_WIDTH = 820;
 export const LIGHTBOX_WIDTH = 1920;
 export const SHORTCUT_MODIFIER =
   typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl';
 // Temporarily hidden after the product review. Keep the implementation ready to restore.
 export const SHOW_SEARCH = false;
+// true: cities and places come from the backend API; false: from the bundled files in src/top.
+export const USE_BACKEND = true;
+export const CITY_STORAGE_KEY = 'archi2go-city-v2';
 
 export type CategoryFilter = 'all' | PlaceCategory;
 export type MapViewportBounds = { west: number; south: number; east: number; north: number };

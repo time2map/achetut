@@ -4,10 +4,10 @@ import {
   useState,
   type KeyboardEvent as ReactKeyboardEvent
 } from 'react';
-import { CITIES, type CuratedCity } from '../places';
+import type { CitySummary } from '../places';
 import { CityListSkeleton, Icon, V2Image } from './ui';
 
-function CityThumb({ city }: { city: CuratedCity }) {
+function CityThumb({ city }: { city: CitySummary }) {
   const [coverReady, setCoverReady] = useState(false);
   return (
     <span
@@ -25,6 +25,7 @@ function CityThumb({ city }: { city: CuratedCity }) {
 }
 
 export function CitySelect({
+  cities,
   city,
   onSelect,
   onOpen,
@@ -32,7 +33,8 @@ export function CitySelect({
   forceOpen = false,
   forceLoading = false
 }: {
-  city: CuratedCity;
+  cities: CitySummary[];
+  city: CitySummary;
   onSelect: (cityId: string) => void;
   onOpen?: () => void;
   pending?: boolean;
@@ -47,10 +49,10 @@ export function CitySelect({
   const [activeIndex, setActiveIndex] = useState(() =>
     Math.max(
       0,
-      CITIES.findIndex((item) => item.id === city.id)
+      cities.findIndex((item) => item.id === city.id)
     )
   );
-  const selectedIndex = CITIES.findIndex((item) => item.id === city.id);
+  const selectedIndex = cities.findIndex((item) => item.id === city.id);
 
   const open = () => {
     setActiveIndex(Math.max(0, selectedIndex));
@@ -66,7 +68,7 @@ export function CitySelect({
   };
 
   const choose = (index: number) => {
-    const next = CITIES[index];
+    const next = cities[index];
     if (next && next.id !== city.id) onSelect(next.id);
     close();
   };
@@ -77,7 +79,7 @@ export function CitySelect({
       setMenuReady(false);
       return;
     }
-    const urls = CITIES.map((item) => item.cover?.thumb).filter((url): url is string => Boolean(url));
+    const urls = cities.map((item) => item.cover?.thumb).filter((url): url is string => Boolean(url));
     if (urls.length === 0) {
       setMenuReady(true);
       return;
@@ -152,7 +154,7 @@ export function CitySelect({
   };
 
   const onListKeyDown = (event: ReactKeyboardEvent<HTMLUListElement>) => {
-    const last = CITIES.length - 1;
+    const last = cities.length - 1;
     const moveActive = (index: number) => {
       setActiveIndex(index);
       scrollOptionIntoMenu(index);
@@ -194,9 +196,9 @@ export function CitySelect({
     if (event.key.length === 1 && /\S/.test(event.key)) {
       const letter = event.key.toLocaleLowerCase();
       const start = activeIndex + 1;
-      const ordered = [...CITIES.slice(start), ...CITIES.slice(0, start)];
+      const ordered = [...cities.slice(start), ...cities.slice(0, start)];
       const match = ordered.find((item) => item.name.toLocaleLowerCase().startsWith(letter));
-      if (match) moveActive(CITIES.indexOf(match));
+      if (match) moveActive(cities.indexOf(match));
     }
   };
 
@@ -240,7 +242,7 @@ export function CitySelect({
           ) : (
             <>
               <small>
-                {city.country}, {city.places.length} places
+                {city.country}, {city.placeCount} places
               </small>
               <strong>{city.name}</strong>
             </>
@@ -257,12 +259,12 @@ export function CitySelect({
           tabIndex={-1}
           aria-labelledby="v2-city-select-label"
           aria-busy={!menuReady || forceLoading}
-          aria-activedescendant={menuReady ? `v2-city-option-${CITIES[activeIndex]?.id}` : undefined}
+          aria-activedescendant={menuReady ? `v2-city-option-${cities[activeIndex]?.id}` : undefined}
           onKeyDown={onListKeyDown}>
           {forceLoading || !menuReady ? (
-            <CityListSkeleton count={CITIES.length} />
+            <CityListSkeleton count={cities.length} />
           ) : (
-            CITIES.map((item, index) => {
+            cities.map((item, index) => {
               const isSelected = item.id === city.id;
               return (
                 <li
@@ -280,8 +282,8 @@ export function CitySelect({
                   </span>
                   <span
                     className="v2-city-option-count"
-                    aria-label={`${item.places.length} places`}>
-                    {item.places.length}
+                    aria-label={`${item.placeCount} places`}>
+                    {item.placeCount}
                   </span>
                   <span className="v2-city-option-check">{isSelected ? <Icon name="check" /> : null}</span>
                 </li>

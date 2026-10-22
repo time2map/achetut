@@ -87,15 +87,15 @@ a { color: inherit; }
   stroke-linejoin: round;
 }
 
-.achetut-logo {
+.archi2go-logo {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  color: var(--brand);
+  gap: 8px;
+  color: var(--ink, #171f1e);
   white-space: nowrap;
 }
-.achetut-logo svg { width: 38px; height: 39px; flex: 0 0 auto; }
-.achetut-logo > span { font-size: 24px; font-weight: 720; letter-spacing: -.04em; }
+.archi2go-logo svg { width: 38px; height: 39px; flex: 0 0 auto; }
+.archi2go-logo > span { font-size: 24px; font-weight: 720; letter-spacing: -.04em; }
 
 .places-panel {
   position: absolute;
@@ -173,9 +173,9 @@ a { color: inherit; }
   background: var(--brand-soft);
   color: var(--brand);
 }
-.collapsed-brand-mark .achetut-logo { gap: 0; }
-.collapsed-brand-mark .achetut-logo svg { width: 32px; height: 33px; }
-.collapsed-brand-mark .achetut-logo > span { display: none; }
+.collapsed-brand-mark .archi2go-logo { gap: 0; }
+.collapsed-brand-mark .archi2go-logo svg { width: 32px; height: 33px; }
+.collapsed-brand-mark .archi2go-logo > span { display: none; }
 .collapsed-panel-copy { min-width: 0; display: flex; flex-direction: column; gap: 4px; text-align: left; }
 .collapsed-panel-copy small { color: var(--brand); font-size: 10px; font-weight: 760; letter-spacing: .06em; text-transform: uppercase; }
 .collapsed-panel-copy strong { overflow: hidden; font-size: 14px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
@@ -1243,7 +1243,7 @@ button.city-guide-card { cursor: pointer; transition: border-color 170ms ease, b
     pointer-events: none;
   }
   .mobile-map-header > * { pointer-events: auto; }
-  .mobile-map-header .achetut-logo {
+  .mobile-map-header .archi2go-logo {
     min-height: 48px;
     padding: 5px 13px 5px 9px;
     border: 1px solid var(--line);
@@ -1251,8 +1251,8 @@ button.city-guide-card { cursor: pointer; transition: border-color 170ms ease, b
     background: rgba(255, 253, 250, .96);
     box-shadow: var(--shadow-control);
   }
-  .mobile-map-header .achetut-logo svg { width: 31px; height: 32px; }
-  .mobile-map-header .achetut-logo > span { font-size: 19px; }
+  .mobile-map-header .archi2go-logo svg { width: 31px; height: 32px; }
+  .mobile-map-header .archi2go-logo > span { font-size: 19px; }
   .mobile-city-button {
     min-height: 48px;
     display: inline-flex;
@@ -1348,8 +1348,8 @@ button.city-guide-card { cursor: pointer; transition: border-color 170ms ease, b
 }
 
 @media (max-width: 420px) {
-  .mobile-map-header .achetut-logo > span { display: none; }
-  .mobile-map-header .achetut-logo { padding-right: 8px; }
+  .mobile-map-header .archi2go-logo > span { display: none; }
+  .mobile-map-header .archi2go-logo { padding-right: 8px; }
   .place-card { grid-template-columns: 88px minmax(0, 1fr); }
   .card-arrow { display: none; }
   .place-why { -webkit-line-clamp: 1; }

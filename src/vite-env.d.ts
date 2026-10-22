@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_ACHETUT_BACK_URL?: string;
+  readonly VITE_ARCHI2GO_BACK_URL?: string;
   readonly VITE_X_USER_ID?: string;
   readonly VITE_MAPBOX_ACCESS_TOKEN?: string;
   readonly VITE_MAPBOX_STYLE?: string;

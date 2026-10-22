@@ -8,7 +8,7 @@ const PrivacyPolicyPage = lazy(() => import('@features/legal/PrivacyPolicyPage')
 
 export function App() {
   return (
-    <Suspense fallback={<main className="route-loading" role="status"><span />Loading Achetut…</main>}>
+    <Suspense fallback={<main className="route-loading" role="status"><span />Loading Archi2go…</main>}>
       <Routes>
         {/* <Route path="/design-1/*" element={<DesktopMapScreen routeBase="/design-1" />} /> */}
         <Route path="/privacy" element={<PrivacyPolicyPage />} />

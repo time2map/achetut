@@ -1,6 +1,6 @@
-# Achetut Web
+# Archi2go Web
 
-Achetut is a web-only collection of curated city guides presented on an interactive Mapbox map.
+Archi2go is a web-only collection of curated city guides presented on an interactive Mapbox map.
 
 ## Stack
 

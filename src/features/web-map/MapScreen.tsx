@@ -10,15 +10,19 @@ import {
 import type { Map as MapboxMap } from 'mapbox-gl';
 import './design-two.css';
 
-import { CITY_BY_ID, DEFAULT_CITY_ID, type CuratedPlace } from './places';
+import { CityNotFoundError, defaultCityId, loadCity, loadCitySummaries } from './data/cityData';
+import type { CitySummary, CuratedCity, CuratedPlace } from './places';
 import {
   BUILDINGS_3D_MIN_ZOOM,
   BUILDINGS_3D_STORAGE_KEY,
+  CITY_STORAGE_KEY,
   CITY_ZOOM,
   COMPACT_PIN_ZOOM,
   FILTERS,
   HOVER_PREVIEW_QUERY,
   MAPBOX_TOKEN,
+  PLACE_3D_BEARING,
+  PLACE_3D_PITCH,
   PLACE_ZOOM,
   SHOW_SEARCH,
   readPreviewLoading,
@@ -37,11 +41,86 @@ import {
 } from './map-screen/mapCamera';
 import { PhotoLightbox } from './map-screen/PhotoLightbox';
 import { PlacesSidebar } from './map-screen/PlacesSidebar';
-import { cityPath, parseRoute, placePath } from './map-screen/routes';
+import { cityPath, parseRoute, placePath, requestedCityId } from './map-screen/routes';
 import { PreviewLoadingContext } from './map-screen/ui';
 import { useMobileSheet } from './map-screen/useMobileSheet';
 
+function describeLoadError(error: unknown) {
+  if (error instanceof CityNotFoundError) return error.message;
+  return navigator.onLine ? 'The guide server did not respond.' : 'You appear to be offline.';
+}
+
 export function MapScreen() {
+  const [data, setData] = useState<{ cities: CitySummary[]; initialCity: CuratedCity } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    setError(null);
+    // Start the likely city in parallel with the city list instead of after it.
+    const requested = requestedCityId();
+    if (requested) loadCity(requested).catch(() => undefined);
+    loadCitySummaries()
+      .then(async (cities) => {
+        const fallbackId = defaultCityId(cities);
+        if (!fallbackId) throw new Error('No city guides found.');
+        const { cityId } = parseRoute(
+          cities.map((city) => city.id),
+          fallbackId
+        );
+        const initialCity = await loadCity(cityId);
+        if (!cancelled) setData({ cities, initialCity });
+      })
+      .catch((reason: unknown) => {
+        if (!cancelled) setError(describeLoadError(reason));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [attempt]);
+
+  if (error) {
+  return (
+      <main className="design-variant-two">
+        <div
+          className="v2-state-card"
+          role="alert">
+          <strong>The guide could not be loaded</strong>
+          <span>{error}</span>
+      <button
+        type="button"
+            onClick={() => setAttempt((value) => value + 1)}>
+            Retry
+      </button>
+        </div>
+      </main>
+    );
+  }
+
+  if (!data) {
+  return (
+      <main className="design-variant-two">
+        <div
+          className="v2-loading"
+          role="status">
+          <span /> Loading guide…
+    </div>
+      </main>
+    );
+  }
+
+  return (
+    <MapScreenContent
+      cities={data.cities}
+      initialCity={data.initialCity}
+    />
+  );
+}
+
+function MapScreenContent({ cities, initialCity }: { cities: CitySummary[]; initialCity: CuratedCity }) {
+  const cityIds = useMemo(() => cities.map((city) => city.id), [cities]);
+  const fallbackCityId = defaultCityId(cities) ?? initialCity.id;
   const previewLoading = useMemo(readPreviewLoading, []);
   const loadingMode = useMemo(() => {
     const value = new URLSearchParams(window.location.search).get('loading');
@@ -50,10 +129,22 @@ export function MapScreen() {
     if (value === 'list') return 'list' as const;
     return previewLoading ? ('all' as const) : ('off' as const);
   }, [previewLoading]);
-  const initialRoute = useMemo(parseRoute, []);
+  const initialRoute = useMemo(() => {
+    const route = parseRoute(cityIds, fallbackCityId);
+    const placeExists = initialCity.places.some((place) => place.id === route.placeId);
+    return { cityId: initialCity.id, placeId: placeExists ? route.placeId : null };
+  }, []);
   const mapRef = useRef<MapboxMap | null>(null);
   const searchRef = useRef<HTMLInputElement | null>(null);
+  const [cityCache, setCityCache] = useState<Record<string, CuratedCity>>(() => ({ [initialCity.id]: initialCity }));
+  const cityCacheRef = useRef(cityCache);
+  cityCacheRef.current = cityCache;
+  const [loadingCityId, setLoadingCityId] = useState<string | null>(null);
+  const [cityLoadError, setCityLoadError] = useState<string | null>(null);
+  const cityRequestRef = useRef(0);
   const [activeCityId, setActiveCityId] = useState(initialRoute.cityId);
+  const activeCityIdRef = useRef(activeCityId);
+  activeCityIdRef.current = activeCityId;
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(initialRoute.placeId);
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all');
   const [query, setQuery] = useState('');
@@ -113,8 +204,8 @@ export function MapScreen() {
     setHighlightedPlaceId((current) => (hovered ? placeId : current === placeId ? null : current));
   }, []);
 
-  const activeCity = CITY_BY_ID[activeCityId] ?? CITY_BY_ID[DEFAULT_CITY_ID];
-  const places = activeCity?.places ?? [];
+  const activeCity = cityCache[activeCityId] ?? initialCity;
+  const places = activeCity.places;
   const availableFilters = useMemo(
     () => FILTERS.filter((filter) => filter.value === 'all' || places.some((place) => place.category === filter.value)),
     [places]
@@ -181,55 +272,77 @@ export function MapScreen() {
     });
   }, []);
 
-  const selectCity = useCallback(
-    (cityId: string, replaceHistory = false) => {
-      const city = CITY_BY_ID[cityId] ?? CITY_BY_ID[DEFAULT_CITY_ID];
-      localStorage.setItem('achetut-city-v2', city.id);
+  /** Shows a city once its places are available; only the latest request wins. */
+  const showCity = useCallback(
+    (cityId: string, placeId: string | null, cameraDuration: number) => {
+      const request = ++cityRequestRef.current;
+      const apply = (city: CuratedCity) => {
+        if (request !== cityRequestRef.current) return;
+        const place = placeId ? (city.places.find((candidate) => candidate.id === placeId) ?? null) : null;
+        setLoadingCityId(null);
+        setCityLoadError(null);
       startCityTransition(() => {
         setActiveCityId(city.id);
-        setSelectedPlaceId(null);
+          setSelectedPlaceId(place?.id ?? null);
         setActiveCategory('all');
         setQuery('');
       });
-      const method = replaceHistory ? 'replaceState' : 'pushState';
-      if (window.location.pathname !== cityPath(city.id)) window.history[method]({}, '', cityPath(city.id));
-      if (mapRef.current) focusCityCamera(mapRef.current, city.center, 650);
+        if (!mapRef.current) return;
+        if (place) focusPlaceCamera(mapRef.current, place, buildings3dRef.current);
+        else focusCityCamera(mapRef.current, city.center, cameraDuration);
+      };
+
+      const cached = cityCacheRef.current[cityId];
+      if (cached) {
+        apply(cached);
+        return;
+      }
+      setLoadingCityId(cityId);
+      loadCity(cityId)
+        .then((city) => {
+          setCityCache((current) => ({ ...current, [city.id]: city }));
+          apply(city);
+        })
+        .catch((reason: unknown) => {
+          if (request !== cityRequestRef.current) return;
+          setLoadingCityId(null);
+          setCityLoadError(describeLoadError(reason));
+          window.history.replaceState({}, '', cityPath(activeCityIdRef.current));
+      });
     },
     [startCityTransition]
   );
 
+  const selectCity = useCallback(
+    (cityId: string, replaceHistory = false) => {
+      const nextCityId = cityIds.includes(cityId) ? cityId : fallbackCityId;
+      localStorage.setItem(CITY_STORAGE_KEY, nextCityId);
+      const method = replaceHistory ? 'replaceState' : 'pushState';
+      if (window.location.pathname !== cityPath(nextCityId)) window.history[method]({}, '', cityPath(nextCityId));
+      showCity(nextCityId, null, 650);
+    },
+    [cityIds, fallbackCityId, showCity]
+  );
+
   useEffect(() => {
     const applyRoute = () => {
-      const route = parseRoute();
-      startCityTransition(() => {
-        setActiveCityId(route.cityId);
-        setSelectedPlaceId(route.placeId);
-        setActiveCategory('all');
-        setQuery('');
-      });
+      const route = parseRoute(cityIds, fallbackCityId);
       setAtBuildingsZoom(Boolean(route.placeId && buildings3dRef.current));
-      const city = CITY_BY_ID[route.cityId];
-      const place = route.placeId ? city.places.find((candidate) => candidate.id === route.placeId) : null;
       if (route.placeId) lastSelectedIdRef.current = route.placeId;
-      if (place && mapRef.current) {
-        focusPlaceCamera(mapRef.current, place, buildings3dRef.current);
-        return;
-      }
-      if (mapRef.current) focusCityCamera(mapRef.current, city.center, 420);
+      showCity(route.cityId, route.placeId, 420);
     };
 
     if (window.location.pathname === '/') {
-      const savedCity = localStorage.getItem('achetut-city-v2');
-      const cityId = savedCity && CITY_BY_ID[savedCity] ? savedCity : DEFAULT_CITY_ID;
-      selectCity(cityId, true);
+      selectCity(initialRoute.cityId, true);
     } else {
-      const route = parseRoute();
-      const canonicalPath = route.placeId ? placePath(route.cityId, route.placeId) : cityPath(route.cityId);
+      const canonicalPath = initialRoute.placeId
+        ? placePath(initialRoute.cityId, initialRoute.placeId)
+        : cityPath(initialRoute.cityId);
       if (window.location.pathname !== canonicalPath) window.history.replaceState({}, '', canonicalPath);
     }
     window.addEventListener('popstate', applyRoute);
     return () => window.removeEventListener('popstate', applyRoute);
-  }, [selectCity]);
+  }, [cityIds, fallbackCityId, initialRoute, selectCity, showCity]);
 
   useEffect(() => {
     const updateOnlineState = () => setIsOnline(navigator.onLine);
@@ -295,9 +408,17 @@ export function MapScreen() {
       map.easeTo({ pitch: 0, bearing: 0, duration: 320 });
       return;
     }
-    if (selectedPlaceRef.current && map.getZoom() >= BUILDINGS_3D_MIN_ZOOM) {
+    if (map.getZoom() < BUILDINGS_3D_MIN_ZOOM) return;
+    if (selectedPlaceRef.current) {
       focusPlaceCamera(map, selectedPlaceRef.current, true);
+      return;
     }
+    map.stop();
+    map.easeTo({
+      pitch: PLACE_3D_PITCH,
+      bearing: Math.abs(map.getBearing()) < 1 ? PLACE_3D_BEARING : map.getBearing(),
+      duration: 520
+    });
   }, [buildings3d, mapReady]);
 
   useEffect(() => {
@@ -342,20 +463,8 @@ export function MapScreen() {
   const freezeList =
     previewLoading &&
     (loadingMode === 'list' || loadingMode === 'cities' || (loadingMode === 'all' && !selectedPlaceId));
-  const cityPending = isCityPending || freezeList;
+  const cityPending = isCityPending || loadingCityId !== null || freezeList;
   const detailPlace = selectedPlace ?? (loadingMode === 'photos' ? (places[0] ?? null) : null);
-
-  if (!activeCity) {
-    return (
-      <main className="design-variant-two">
-        <div
-          className="v2-state-card"
-          role="alert">
-          No city guides found.
-        </div>
-      </main>
-    );
-  }
 
   return (
     <PreviewLoadingContext.Provider value={previewLoading}>
@@ -388,16 +497,17 @@ export function MapScreen() {
           onPreviewHover={previewOnHover}
           onToggleBuildings3d={toggleBuildings3d}
           onMapClick={() => {
-            if (!selectedPlaceId) return;
-            setPreviewPlaceId(null);
-            setHighlightedPlaceId(null);
-            clearSelection();
-          }}
+                if (!selectedPlaceId) return;
+                setPreviewPlaceId(null);
+                setHighlightedPlaceId(null);
+                clearSelection();
+              }}
           onDragStart={() => setPreviewPlaceId(null)}
           changeSheetLevel={changeSheetLevel}
         />
 
         <PlacesSidebar
+          cities={cities}
           activeCity={activeCity}
           detailPlace={detailPlace}
           freezeList={freezeList}
@@ -459,6 +569,13 @@ export function MapScreen() {
             className="v2-offline"
             role="status">
             Offline — showing cached guide content
+          </div>
+        )}
+        {isOnline && cityLoadError && (
+          <div
+            className="v2-offline"
+            role="alert">
+            {cityLoadError} Try choosing the city again.
           </div>
         )}
         {lightbox?.place.photo ? (

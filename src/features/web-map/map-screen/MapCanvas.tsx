@@ -120,8 +120,10 @@ export function MapCanvas({
               colorBuildings: '#c9c0b7',
               colorPlaceLabels: '#17201e',
               colorRoadLabels: '#626e6a',
-              showPointOfInterestLabels: false,
-              showPlaceLabels: true,
+              // Basemap POIs stay sparse so curated pins keep the visual lead.
+              showPointOfInterestLabels: true,
+              densityPointOfInterestLabels: 1,
+              showPlaceLabels: false,
               showRoadLabels: true,
               showPedestrianRoads: true,
               showTransitLabels: false,
@@ -166,12 +168,14 @@ export function MapCanvas({
             isUserZoomingRef.current = false;
             const map = mapRef.current;
             if (!map) return;
-            if (buildings3dRef.current && selectedPlace && event.viewState.zoom >= BUILDINGS_3D_MIN_ZOOM) {
+            if (buildings3dRef.current && event.viewState.zoom >= BUILDINGS_3D_MIN_ZOOM) {
+              // Keep a tilt the user set by hand; only lift a flat map into 3D.
+              if (map.getPitch() > 20) return;
               map.stop();
               map.easeTo({
                 pitch: PLACE_3D_PITCH,
                 bearing: Math.abs(map.getBearing()) < 1 ? PLACE_3D_BEARING : map.getBearing(),
-                duration: 260
+                duration: 520
               });
               return;
             }

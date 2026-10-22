@@ -1,6 +1,6 @@
 import type { CSSProperties, Ref, RefObject } from 'react';
-import { AchetutLogo } from '../AchetutLogo';
-import { CATEGORY_META, type CuratedCity, type CuratedPlace } from '../places';
+import { Archi2goLogo } from '../Archi2goLogo';
+import { CATEGORY_META, type CitySummary, type CuratedCity, type CuratedPlace } from '../places';
 import { CitySelect } from './CitySelect';
 import {
   FILTERS,
@@ -11,11 +11,11 @@ import {
 } from './config';
 import { listPhotoUrl } from './photoUtils';
 import { PlaceDetail } from './PlaceDetail';
-import { cityPath } from './routes';
 import { Icon, PhotoCredit, PlaceListSkeleton, V2Image } from './ui';
 import type { MobileSheetApi } from './useMobileSheet';
 
 export function PlacesSidebar({
+  cities,
   activeCity,
   detailPlace,
   freezeList,
@@ -41,6 +41,7 @@ export function PlacesSidebar({
   onOpenPhoto,
   onSetHighlightedPlaceId
 }: {
+  cities: CitySummary[];
   activeCity: CuratedCity;
   detailPlace: CuratedPlace | null;
   freezeList: boolean;
@@ -102,15 +103,13 @@ export function PlacesSidebar({
       ) : (
         <>
           <header className="v2-sidebar-header">
-            <a
-              className="v2-brand"
-              href={cityPath(activeCity.id)}
-              aria-label="Achetut home">
-              <AchetutLogo />
+            <div className="v2-brand">
+              <Archi2goLogo />
               <span className="v2-edition">City guide</span>
-            </a>
+            </div>
 
             <CitySelect
+              cities={cities}
               city={activeCity}
               pending={cityPending}
               onSelect={onSelectCity}

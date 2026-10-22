@@ -4,12 +4,10 @@ import Map, { AttributionControl, Marker } from 'react-map-gl/mapbox';
 import './desktop-map.css';
 
 import { env } from '@shared/config/env';
-import { AchetutLogo } from './AchetutLogo';
+import { Archi2goLogo } from './Archi2goLogo';
+import { CITIES, CITY_BY_ID, DEFAULT_CITY_ID } from './data/topCities';
 import {
   CATEGORY_META,
-  CITIES,
-  CITY_BY_ID,
-  DEFAULT_CITY_ID,
   EUROPE_OVERVIEW,
   cityGuideCopy,
   type CuratedCity,
@@ -476,7 +474,7 @@ export function DesktopMapScreen({ routeBase: routeBaseProp = '' }: DesktopMapSc
   }, [activeCityId, routeBase]);
 
   const selectCity = useCallback((city: CuratedCity) => {
-    localStorage.setItem('achetut-city', city.id);
+    localStorage.setItem('archi2go-city', city.id);
     setActiveCityId(city.id);
     setPanelMode('list');
     setSelectedPlaceId(null);
@@ -551,7 +549,7 @@ export function DesktopMapScreen({ routeBase: routeBaseProp = '' }: DesktopMapSc
         return;
       }
 
-      const savedCityId = localStorage.getItem('achetut-city');
+      const savedCityId = localStorage.getItem('archi2go-city');
       const fallbackId = savedCityId && CITY_BY_ID[savedCityId] ? savedCityId : DEFAULT_CITY_ID;
       setActiveCityId(fallbackId);
       setSelectedPlaceId(null);
@@ -691,7 +689,7 @@ export function DesktopMapScreen({ routeBase: routeBaseProp = '' }: DesktopMapSc
       </div>
 
       <header className="mobile-map-header">
-        <AchetutLogo />
+        <Archi2goLogo />
         <button className="mobile-city-button" type="button" onClick={showCities} aria-label="Choose a city">
           <Icon name="pin" />
           {panelMode === 'cities' ? 'All cities' : activeCity.name}
@@ -722,10 +720,10 @@ export function DesktopMapScreen({ routeBase: routeBaseProp = '' }: DesktopMapSc
         data-sheet-level={sheetLevel}
         aria-label={panelMode === 'cities' ? 'Choose a city' : panelMode === 'list' ? `Places in ${activeCity.name}` : selectedPlace?.title ?? 'Place details'}
       >
-        <button className="collapsed-panel-card" type="button" onClick={() => setIsPanelOpen(true)} aria-label="Open Achetut places panel" aria-expanded={isPanelOpen}>
-          <span className="collapsed-brand-mark"><AchetutLogo /></span>
+        <button className="collapsed-panel-card" type="button" onClick={() => setIsPanelOpen(true)} aria-label="Open Archi2go places panel" aria-expanded={isPanelOpen}>
+          <span className="collapsed-brand-mark"><Archi2goLogo /></span>
           <span className="collapsed-panel-copy">
-            <small>{panelMode === 'cities' ? 'Achetut guides' : `${activeCity.name} guide`}</small>
+            <small>{panelMode === 'cities' ? 'Archi2go guides' : `${activeCity.name} guide`}</small>
             <strong>{panelMode === 'cities' ? 'Choose your next city' : `${places.length} curated places`}</strong>
           </span>
           <span className="collapsed-panel-arrow" aria-hidden="true"><Icon name="chevron-right" /></span>
@@ -752,9 +750,9 @@ export function DesktopMapScreen({ routeBase: routeBaseProp = '' }: DesktopMapSc
           </button>
 
           <div className="desktop-panel-header">
-            <AchetutLogo />
+            <Archi2goLogo />
             <div className="panel-header-actions">
-              <button className="icon-button" type="button" onClick={() => setModal('about')} aria-label="About Achetut"><Icon name="info" /></button>
+              <button className="icon-button" type="button" onClick={() => setModal('about')} aria-label="About Archi2go"><Icon name="info" /></button>
               <button className="quiet-button" type="button" onClick={closePanel} aria-label="Collapse places panel" aria-expanded={isPanelOpen}>
                 <Icon name="chevron-left" />
                 Hide
@@ -1006,7 +1004,7 @@ export function DesktopMapScreen({ routeBase: routeBaseProp = '' }: DesktopMapSc
 
           <footer className="panel-legal">
             <a href="/privacy">Privacy policy</a>
-            <span>© Achetut</span>
+            <span>© Archi2go</span>
           </footer>
         </div>
       </aside>
@@ -1015,12 +1013,12 @@ export function DesktopMapScreen({ routeBase: routeBaseProp = '' }: DesktopMapSc
         <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setModal(null); }}>
           <section className="app-modal about-modal" role="dialog" aria-modal="true" aria-labelledby="about-title">
             <div className="modal-header">
-              <AchetutLogo />
-              <button ref={modalCloseRef} className="icon-button" type="button" onClick={() => setModal(null)} aria-label="Close about Achetut"><Icon name="close" /></button>
+              <Archi2goLogo />
+              <button ref={modalCloseRef} className="icon-button" type="button" onClick={() => setModal(null)} aria-label="Close about Archi2go"><Icon name="close" /></button>
             </div>
             <span className="eyebrow">Independent city guides</span>
             <h2 id="about-title">Good places, with a reason to go.</h2>
-            <p>Achetut gathers architecture, public space and unusual city stories into one concise map. Every place is researched and prepared in advance — nothing here is generated on demand.</p>
+            <p>Archi2go gathers architecture, public space and unusual city stories into one concise map. Every place is researched and prepared in advance — nothing here is generated on demand.</p>
             <div className="about-links"><a href="mailto:feedback@time2map.com">Send feedback</a><a href="/privacy">Privacy policy</a><a href="#credits">Photo credits & sources</a></div>
             <small>Version 1.0 — Map data © OpenStreetMap contributors</small>
           </section>
