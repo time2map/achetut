@@ -664,7 +664,8 @@ export function DesktopMapScreen({ routeBase: routeBaseProp = '' }: DesktopMapSc
               setMapError(null);
             }}
             onError={(event) => {
-              if (!mapRef.current?.loaded()) setMapError(event.error?.message ?? 'The map could not be loaded.');
+              if (!mapRef.current) setMapError(event.error?.message ?? 'The map could not be loaded.');
+              else console.warn('Mapbox error', event.error);
             }}
           >
             <AttributionControl compact={false} position="bottom-right" />

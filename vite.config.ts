@@ -1,15 +1,31 @@
 import { fileURLToPath, URL } from 'node:url';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig, loadEnv, type Plugin } from 'vite';
 
 const DEFAULT_BACKEND_URL = 'https://achetut-back.time2map.com';
+
+// iOS Safari can run Mapbox worker requests before the worker receives its referrer,
+// which crashes on `undefined.startsWith`. Fall back to the page origin (same as the worker's).
+const MAPBOX_WORKER_REFERRER = '()=>self.worker.referrer:';
+function mapboxWorkerReferrerFallback(): Plugin {
+  return {
+    name: 'mapbox-worker-referrer-fallback',
+    transform(code, id) {
+      if (!id.includes('mapbox-gl/dist/esm/shared.js') || !code.includes(MAPBOX_WORKER_REFERRER)) return null;
+      return {
+        code: code.replace(MAPBOX_WORKER_REFERRER, '()=>self.worker.referrer||self.location.origin+"/":'),
+        map: null
+      };
+    }
+  };
+}
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
 
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), mapboxWorkerReferrerFallback()],
     envPrefix: ['VITE_', 'EXPO_PUBLIC_'],
     server: {
       proxy: {
@@ -21,7 +37,8 @@ export default defineConfig(({ mode }) => {
       }
     },
     worker: {
-      format: 'es'
+      format: 'es',
+      plugins: () => [mapboxWorkerReferrerFallback()]
     },
     optimizeDeps: {
       // Keep react-map-gl's dynamic Mapbox import and code-split workers out of the dev prebundle.

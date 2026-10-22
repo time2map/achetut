@@ -189,7 +189,9 @@ export function MapCanvas({
             if (isMobileSheet && sheetLevel === 'half' && !selectedPlaceId) changeSheetLevel('peek');
           }}
           onError={(event) => {
-            if (!mapRef.current?.loaded()) onMapError(event.error?.message ?? 'The map could not be loaded.');
+            // loaded() is false whenever tiles are in flight, so only errors before the first load are fatal.
+            if (!mapRef.current) onMapError(event.error?.message ?? 'The map could not be loaded.');
+            else console.warn('Mapbox error', event.error);
           }}>
           <NavigationControl
             position="top-right"

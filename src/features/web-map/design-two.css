@@ -1103,12 +1103,15 @@
   place-items: center;
   overflow: hidden;
   border-radius: 50%;
+  /* WebKit ignores overflow + radius clipping under the pin's filter/transform. */
+  clip-path: circle(50%);
 }
 .v2-pin-photo img {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
+  border-radius: 50%;
   object-fit: cover;
   opacity: 0;
   transition: opacity 200ms ease;
