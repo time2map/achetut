@@ -9,18 +9,20 @@ const architecturalMapLut = architecturalMapLutDataUrl.replace(/^data:image\/png
 const standardChrome = {
   font: 'DIN Pro',
   colorModePointOfInterestLabels: 'single',
+  // colorModePlaceLabels: 'single',
+  // colorModeRoadLabels: 'single',
   showPointOfInterestLabels: false,
   densityPointOfInterestLabels: 1,
   showPlaceLabels: false,
-  showRoadLabels: true,
+  showRoadLabels: false,
   showPedestrianRoads: false,
   showHdRoads: false,
   showTransitLabels: false,
   showAdminBoundaries: false,
   showLandmarkIcons: false,
   showLandmarkIconLabels: false,
-  showIndoor: false,
-  showIndoorLabels: false,
+  showIndoor: true,
+  showIndoorLabels: true,
   show3dBuildings: true,
   show3dLandmarks: true,
   show3dTrees: false,
@@ -33,6 +35,7 @@ export type MapDesignId =
   | 'day'
   | 'dusk'
   | 'white'
+  | 'classic'
   | 'night'
   | 'monochrome'
   | 'faded'
@@ -46,7 +49,23 @@ export type MapDesign = {
   label: string;
   style: string;
   basemap?: Record<string, string | number | boolean>;
+  configureStyle?: (map: MapboxMap) => void;
 };
+
+function makeClassicRoadShieldsMonochrome(map: MapboxMap) {
+  for (const layer of map.getStyle().layers ?? []) {
+    if (layer.type !== 'symbol') continue;
+    const iconImage = layer.layout?.['icon-image'];
+    const shieldSignature = `${layer.id} ${JSON.stringify(iconImage ?? '')}`;
+    if (!/shield|road-number/i.test(shieldSignature)) continue;
+
+    // Classic road shields are regular sprite images, so desaturate the icon
+    // instead of trying to tint it with the SDF-only `icon-color` property.
+    map.setPaintProperty(layer.id, 'icon-color-saturation', -1);
+    map.setPaintProperty(layer.id, 'icon-color-contrast', 0.08);
+    map.setPaintProperty(layer.id, 'icon-color-brightness-min', 0.04);
+  }
+}
 
 // Temporary design switcher. `current` is the palette wired into the map today.
 export const MAP_DESIGNS: MapDesign[] = [
@@ -176,6 +195,7 @@ export function applyMapDesign(map: MapboxMap, id: MapDesignId, buildings3d: boo
         }
       }
     }
+    design.configureStyle?.(map);
     applied3dObjects.delete(map);
     setShow3dObjects(map, buildings3d);
     try {

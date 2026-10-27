@@ -112,7 +112,7 @@ export function MapCanvas({
     !(highlightedPlaceId === placeId && previewPlaceId !== placeId);
   return (
     <div
-      className={`v2-map-canvas${mapDesignId === 'white' ? ' is-map-design-white' : ''}${isCompactPins ? ' is-compact-pins' : ''}${selectedPlaceId ? ' has-selection' : ''}`}
+      className={`v2-map-canvas${mapDesignId === 'white' || mapDesignId === 'classic' ? ' is-map-design-white' : ''}${isCompactPins ? ' is-compact-pins' : ''}${selectedPlaceId ? ' has-selection' : ''}`}
       role="region"
       aria-label={`Map of curated places in ${activeCity.name}`}>
       {MAPBOX_TOKEN ? (
