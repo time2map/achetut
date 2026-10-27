@@ -1,7 +1,7 @@
 import { memo, useCallback, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Marker, useControl } from 'react-map-gl/mapbox';
-import { CATEGORY_META, type CuratedPlace } from '../places';
+import { CATEGORY_META, placeByline, type CuratedPlace } from '../places';
 import { PhotoCredit, V2Image } from './ui';
 
 export function Buildings3DControl({
@@ -43,12 +43,14 @@ function V2PlaceMarker({
   place,
   selected,
   highlighted,
+  dot,
   onSelect,
   onHoverChange
 }: {
   place: CuratedPlace;
   selected: boolean;
   highlighted: boolean;
+  dot: boolean;
   onSelect: () => void;
   onHoverChange: (hovered: boolean) => void;
 }) {
@@ -56,8 +58,7 @@ function V2PlaceMarker({
   return (
     <button
       type="button"
-      className={`v2-pin is-${place.category}${selected ? ' is-selected' : ''}${highlighted ? ' is-highlighted' : ''}`}
-      style={{ '--pin-color': category.color } as React.CSSProperties}
+      className={`v2-pin is-${place.category}${selected ? ' is-selected' : ''}${highlighted ? ' is-highlighted' : ''}${dot ? ' is-dot' : ''}`}
       aria-label={
         place.photo
           ? `${place.title}, ${category.label}. Photo by ${place.photo.author || 'unknown author'}${place.photo.license ? `, ${place.photo.license}` : ''}`
@@ -75,25 +76,29 @@ function V2PlaceMarker({
       }}
       onMouseEnter={() => onHoverChange(true)}
       onMouseLeave={() => onHoverChange(false)}>
-      <span className="v2-pin-ground" />
-      <span className="v2-pin-body">
-        <span className="v2-pin-tail" />
-        <span className="v2-pin-frame">
-          <span className={`v2-pin-photo tone-${place.placeholderTone}`}>
-            <span className="v2-pin-initial">{place.title.charAt(0)}</span>
-            {place.photo ? (
-              <img
-                src={place.photo.marker}
-                alt=""
-                loading="lazy"
-                decoding="async"
-                onLoad={(event) => event.currentTarget.parentElement?.classList.add('has-image')}
-                onError={(event) => event.currentTarget.remove()}
-              />
-            ) : null}
+      {dot ? null : (
+        <>
+          <span className="v2-pin-body">
+            <span className="v2-pin-frame">
+              <span className={`v2-pin-photo tone-${place.placeholderTone}`}>
+                <span className="v2-pin-initial">{place.title.charAt(0)}</span>
+                {place.photo ? (
+                  <img
+                    src={place.photo.marker}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    onLoad={(event) => event.currentTarget.parentElement?.classList.add('has-image')}
+                    onError={(event) => event.currentTarget.remove()}
+                  />
+                ) : null}
+              </span>
+            </span>
           </span>
-        </span>
-      </span>
+          <span className="v2-pin-stem" />
+        </>
+      )}
+      <span className="v2-pin-point" />
     </button>
   );
 }
@@ -102,12 +107,14 @@ export const MapPlaceMarker = memo(function MapPlaceMarker({
   place,
   selected,
   highlighted,
+  dot,
   onSelect,
   onHoverChange
 }: {
   place: CuratedPlace;
   selected: boolean;
   highlighted: boolean;
+  dot: boolean;
   onSelect: (place: CuratedPlace) => void;
   onHoverChange: (placeId: string, hovered: boolean) => void;
 }) {
@@ -122,11 +129,12 @@ export const MapPlaceMarker = memo(function MapPlaceMarker({
       longitude={place.coordinates[0]}
       latitude={place.coordinates[1]}
       anchor="bottom"
-      style={{ zIndex: selected ? 3 : highlighted ? 2 : 1 }}>
+      style={{ zIndex: selected ? 3 : highlighted ? 2 : dot ? 0 : 1 }}>
       <V2PlaceMarker
         place={place}
         selected={selected}
         highlighted={highlighted}
+        dot={dot}
         onSelect={selectMarker}
         onHoverChange={changeMarkerHover}
       />
@@ -137,7 +145,7 @@ export const MapPlaceMarker = memo(function MapPlaceMarker({
 export function HoverPreview({ place }: { place: CuratedPlace }) {
   const [photoFailed, setPhotoFailed] = useState(false);
   const category = CATEGORY_META[place.category];
-  const meta = [place.architect, place.year].filter(Boolean).join(', ');
+  const byline = placeByline(place);
   return (
     <div className="v2-hover-card">
       <span
@@ -153,12 +161,9 @@ export function HoverPreview({ place }: { place: CuratedPlace }) {
         )}
       </span>
       <span className="v2-hover-copy">
-        <small>
-          <i style={{ backgroundColor: category.color }} />
-          {category.label}
-        </small>
+        <small>{category.label}</small>
         <strong>{place.title}</strong>
-        {meta ? <span>{meta}</span> : null}
+        {byline ? <span>{byline}</span> : null}
         {place.photo && !photoFailed ? <PhotoCredit photo={place.photo} /> : null}
       </span>
     </div>

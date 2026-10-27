@@ -5,14 +5,23 @@ export const MAPBOX_TOKEN = env.mapboxAccessToken;
 export const MAPBOX_STYLE = env.mapboxStyle;
 
 export const CITY_ZOOM = 12.35;
-export const PLACE_ZOOM = 14.6;
-export const PLACE_3D_ZOOM = 18;
-export const PLACE_3D_ZOOM_MOBILE = 16.5;
+export const PLACE_ZOOM = 13.9;
+export const PLACE_3D_ZOOM = 16.4;
+export const PLACE_3D_ZOOM_MOBILE = 15.4;
 export const PLACE_3D_PITCH = 62;
+// Pitch raises the horizon. The camera cannot tilt past this, including the phone gesture.
+export const MAP_MAX_PITCH = 65;
 export const PLACE_3D_BEARING = -20;
 export const COMPACT_PIN_ZOOM = 13;
+// Photo pins per viewport; the rest of the places in view render as dots.
+export const MAX_PHOTO_PINS = 10;
+// From this zoom every place in view is a photo pin, overlap included.
+export const PHOTO_PIN_ALWAYS_ZOOM = 15;
+export const PHOTO_PIN_GAP = 6;
 export const HOVER_PREVIEW_QUERY = '(hover: hover) and (pointer: fine) and (min-width: 820px)';
 export const BUILDINGS_3D_MIN_ZOOM = 15.2;
+// Mapbox Standard POI labels stay off at city overview so curated pins stay primary.
+export const POI_LABELS_MIN_ZOOM = 16;
 export const BUILDINGS_3D_STORAGE_KEY = 'archi2go-3d-v2';
 export const MOBILE_QUERY_WIDTH = 820;
 export const LIGHTBOX_WIDTH = 1920;
@@ -23,6 +32,8 @@ export const SHOW_SEARCH = false;
 // true: cities and places come from the backend API; false: from the bundled files in src/top.
 export const USE_BACKEND = true;
 export const CITY_STORAGE_KEY = 'archi2go-city-v2';
+export const TIME2MAP_URL = 'https://time2map.com/';
+export const APP_VERSION_LABEL = [`v${__APP_VERSION__}`];
 
 export type CategoryFilter = 'all' | PlaceCategory;
 export type MapViewportBounds = { west: number; south: number; east: number; north: number };
@@ -38,6 +49,8 @@ export type IconName =
   | 'close'
   | 'external'
   | 'location'
+  | 'menu'
+  | 'message'
   | 'search';
 
 export const SHEET_LEVELS: SheetLevel[] = ['peek', 'half', 'full'];

@@ -169,7 +169,6 @@ export function PhotoLightbox({
         ) : null}
         <figcaption>
           <span className="v2-lightbox-kicker">
-            <i style={{ backgroundColor: CATEGORY_META[place.category].color }} />
             {CATEGORY_META[place.category].label} — {city.name}
           </span>
           <strong id="v2-lightbox-title">{place.title}</strong>

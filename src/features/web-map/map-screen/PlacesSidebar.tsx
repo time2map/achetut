@@ -1,6 +1,14 @@
-import type { CSSProperties, Ref, RefObject } from 'react';
+import type { Ref, RefObject } from 'react';
 import { Archi2goLogo } from '../Archi2goLogo';
-import { CATEGORY_META, type CitySummary, type CuratedCity, type CuratedPlace } from '../places';
+import { Time2mapMark } from '../Time2mapMark';
+import {
+  CATEGORY_META,
+  placeByline,
+  type CitySummary,
+  type CuratedCity,
+  type CuratedPlace
+} from '../places';
+import { AppMenu } from './AppMenu';
 import { CitySelect } from './CitySelect';
 import {
   FILTERS,
@@ -39,6 +47,7 @@ export function PlacesSidebar({
   onChangeCategory,
   onSetQuery,
   onOpenPhoto,
+  onOpenAbout,
   onSetHighlightedPlaceId
 }: {
   cities: CitySummary[];
@@ -65,6 +74,7 @@ export function PlacesSidebar({
   onChangeCategory: (category: CategoryFilter) => void;
   onSetQuery: (query: string) => void;
   onOpenPhoto: (index: number) => void;
+  onOpenAbout: () => void;
   onSetHighlightedPlaceId: (updater: string | null | ((current: string | null) => string | null)) => void;
 }) {
   return (
@@ -99,6 +109,10 @@ export function PlacesSidebar({
             onClearSelection();
           }}
           onOpenPhoto={onOpenPhoto}
+          onOpenMenu={() => {
+            if (isMobileSheet && sheetLevel === 'peek') sheet.changeSheetLevel('half');
+          }}
+          onOpenAbout={onOpenAbout}
         />
       ) : (
         <>
@@ -118,6 +132,13 @@ export function PlacesSidebar({
               }}
               forceOpen={loadingMode === 'cities'}
               forceLoading={previewLoading}
+            />
+
+            <AppMenu
+              onOpen={() => {
+                if (isMobileSheet && sheetLevel === 'peek') sheet.changeSheetLevel('half');
+              }}
+              onAbout={onOpenAbout}
             />
 
             {SHOW_SEARCH ? (
@@ -220,11 +241,6 @@ export function PlacesSidebar({
                   <button
                     key={filter.value}
                     className={activeCategory === filter.value ? 'is-active' : ''}
-                    style={
-                      filter.value === 'all'
-                        ? undefined
-                        : ({ '--chip-color': CATEGORY_META[filter.value].color } as CSSProperties)
-                    }
                     type="button"
                     onClick={() => onChangeCategory(filter.value)}
                     aria-pressed={activeCategory === filter.value}>
@@ -274,16 +290,14 @@ export function PlacesSidebar({
                     {place.photo ? <V2Image src={listPhotoUrl(place.photo)} /> : null}
                   </span>
                   <span className="v2-place-copy">
-                    <span className="v2-place-type">
-                      <i style={{ backgroundColor: CATEGORY_META[place.category].color }} />
-                      {CATEGORY_META[place.category].label}
-                    </span>
+                    <span className="v2-place-type">{CATEGORY_META[place.category].label}</span>
                     <button
                       className="v2-place-hit"
                       type="button"
                       onClick={() => onSelectPlace(place)}>
                       <strong title={place.title}>{place.title}</strong>
                     </button>
+                    {placeByline(place) ? <span className="v2-place-byline">{placeByline(place)}</span> : null}
                     <span
                       className="v2-place-description"
                       title={place.why}>
@@ -300,6 +314,16 @@ export function PlacesSidebar({
 
       <footer className="v2-sidebar-footer">
         <a href="/privacy">Privacy policy</a>
+        <a
+          className="v2-time2map"
+          href="https://time2map.com/"
+          target="_blank"
+          rel="noreferrer"
+          aria-label="time2map — Maps and GIS solutions">
+          <span aria-hidden="true">by</span>
+          <Time2mapMark className="v2-time2map-mark" />
+          <span>time2map</span>
+        </a>
       </footer>
     </aside>
   );

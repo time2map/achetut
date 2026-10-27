@@ -6,21 +6,14 @@ import {
   type PointerEvent as ReactPointerEvent
 } from 'react';
 import { CATEGORY_META, type CuratedCity, type CuratedPlace } from '../places';
+import { AppMenu } from './AppMenu';
 import { isKeyboardNavigation } from './inputModality';
 import { commonsSearchUrl, googleMapsUrl, uniqueSources } from './photoUtils';
 import { Icon, PhotoCredit, V2Image } from './ui';
 
 function PopupPlaceholder({ place, city }: { place: CuratedPlace; city: CuratedCity }) {
-  const initial = place.title.match(/\p{L}/u)?.[0] ?? CATEGORY_META[place.category].label.charAt(0);
   return (
-    <div
-      className="v2-popup-media is-empty"
-      style={{ '--ph-color': CATEGORY_META[place.category].color } as React.CSSProperties}>
-      <span
-        className="v2-popup-empty-mark"
-        aria-hidden="true">
-        {initial.toLocaleUpperCase()}
-      </span>
+    <div className="v2-popup-media is-empty">
       <div className="v2-popup-empty-copy">
         <span className="v2-popup-empty-icon">
           <Icon name="location" />
@@ -43,12 +36,16 @@ export function PlaceDetail({
   place,
   city,
   onBack,
-  onOpenPhoto
+  onOpenPhoto,
+  onOpenMenu,
+  onOpenAbout
 }: {
   place: CuratedPlace;
   city: CuratedCity;
   onBack: () => void;
   onOpenPhoto: (index: number) => void;
+  onOpenMenu: () => void;
+  onOpenAbout: () => void;
 }) {
   const backRef = useRef<HTMLButtonElement | null>(null);
   const thumbsRef = useRef<HTMLDivElement | null>(null);
@@ -125,7 +122,13 @@ export function PlaceDetail({
           <Icon name="arrow-left" />
           <span>All places</span>
         </button>
-        <span className="v2-detail-city">{city.name}</span>
+        <div className="v2-detail-actions">
+          <span className="v2-detail-city">{city.name}</span>
+          <AppMenu
+            onOpen={onOpenMenu}
+            onAbout={onOpenAbout}
+          />
+        </div>
       </div>
 
       <article
@@ -321,10 +324,7 @@ export function PlaceDetail({
         ) : null}
 
         <div className="v2-detail-body">
-          <div className="v2-popup-kicker">
-            <i style={{ backgroundColor: category.color }} />
-            {category.label}
-          </div>
+          <div className="v2-popup-kicker">{category.label}</div>
           <h2 id="v2-detail-title">{place.title}</h2>
           {place.architect || place.year || place.area ? (
             <dl className="v2-popup-meta">

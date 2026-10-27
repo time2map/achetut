@@ -1,22 +1,15 @@
+import '@fontsource-variable/jost/wght.css';
+
 export function Archi2goLogo() {
   return (
-    <div className="archi2go-logo" aria-label="Archi2go">
+    <div className="archi2go-logo" role="img" aria-label="Archi2go">
       <i className="archi2go-mark" aria-hidden="true">
-        <svg viewBox="0 0 41 42">
-          <path
-            d="M1.86 40.14c1.69 1.69 3.77 2.34 4.65 1.47l.16-.2 9.77-12.34a18.2 18.2 0 0 1-4.39-4.18L.39 35.51c-.88.87-.22 2.95 1.47 4.63Z"
-            fill="currentColor"
-          />
-          <path
-            fillRule="evenodd"
-            d="M40.45 15.67c0 8.65-7.03 15.67-15.71 15.67a15.7 15.7 0 1 1 15.71-15.67Zm-15.71 12.95a12.97 12.97 0 1 0 0-25.91 12.97 12.97 0 0 0 0 25.91Zm4.88-9.37c1.29-.29 3.91-.06 4.27 3.17a11.4 11.4 0 0 1-9.15 4.6c-4.79 0-8.9-2.96-10.57-7.15h.86V15.3l1.62-1.02 3.69.7v3.57h1.18V12.1l1.48-.81 3.61 1.21v3.84h3.01v2.9Zm.47-6.7a2.22 2.22 0 1 0 0-4.44 2.22 2.22 0 0 0 0 4.44ZM17.59 20.22v-1.24h1.24v1.24h-1.24Zm0-3.95v1.23h1.24v-1.23h-1.24Zm6.68.49v-1.23h1.23v1.23h-1.23Zm0-3.7v1.23h1.23v-1.23h-1.23Zm2.59 5.92v-1.23h1.24v1.23h-1.24Z"
-            fill="currentColor"
-          />
+        <svg viewBox="200 210 623 628">
+          <path d="M200 590 630 210v283L200 838Z" fill="currentColor" />
+          <path d="M632 495h191v343H632Z" fill="currentColor" />
         </svg>
       </i>
-      <span>
-        Archi<em>2</em>go
-      </span>
+      <span className="archi2go-word" aria-hidden="true">Archi2go</span>
     </div>
   );
 }

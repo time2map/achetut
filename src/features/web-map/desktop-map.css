@@ -89,13 +89,19 @@ a { color: inherit; }
 
 .archi2go-logo {
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: .32em;
   color: var(--ink, #171f1e);
+  font-family: 'Jost Variable', sans-serif;
+  font-size: 19px;
+  font-weight: 580;
+  line-height: 1;
+  letter-spacing: .01em;
   white-space: nowrap;
 }
-.archi2go-logo svg { width: 38px; height: 39px; flex: 0 0 auto; }
-.archi2go-logo > span { font-size: 24px; font-weight: 720; letter-spacing: -.04em; }
+.archi2go-mark { display: block; }
+.archi2go-mark svg { display: block; width: 1.9em; height: 1.9em; flex: 0 0 auto; }
 
 .places-panel {
   position: absolute;
@@ -174,7 +180,8 @@ a { color: inherit; }
   color: var(--brand);
 }
 .collapsed-brand-mark .archi2go-logo { gap: 0; }
-.collapsed-brand-mark .archi2go-logo svg { width: 32px; height: 33px; }
+.collapsed-brand-mark .archi2go-mark { margin: 0; }
+.collapsed-brand-mark .archi2go-mark svg { width: 30px; height: 30px; }
 .collapsed-brand-mark .archi2go-logo > span { display: none; }
 .collapsed-panel-copy { min-width: 0; display: flex; flex-direction: column; gap: 4px; text-align: left; }
 .collapsed-panel-copy small { color: var(--brand); font-size: 10px; font-weight: 760; letter-spacing: .06em; text-transform: uppercase; }
@@ -1128,7 +1135,9 @@ button.city-guide-card { cursor: pointer; transition: border-color 170ms ease, b
 .about-modal h2 { max-width: 11ch; font-size: 42px; }
 .about-modal > p { max-width: 48ch; margin: 20px 0 0; color: var(--ink-soft); font-size: 15px; line-height: 1.65; }
 .about-links { display: flex; flex-wrap: wrap; gap: 16px; margin: 26px 0; padding-block: 18px; border-block: 1px solid var(--line); }
-.about-links a { color: var(--brand); font-size: 12px; font-weight: 700; text-underline-offset: 3px; }
+.about-links a,
+.about-links button { padding: 0; border: 0; color: var(--brand); background: none; font-size: 12px; font-weight: 700; text-underline-offset: 3px; }
+.about-links button:disabled { opacity: .42; cursor: not-allowed; }
 .about-modal > small { color: var(--muted); font-size: 10px; }
 
 .photo-lightbox {
@@ -1251,8 +1260,7 @@ button.city-guide-card { cursor: pointer; transition: border-color 170ms ease, b
     background: rgba(255, 253, 250, .96);
     box-shadow: var(--shadow-control);
   }
-  .mobile-map-header .archi2go-logo svg { width: 31px; height: 32px; }
-  .mobile-map-header .archi2go-logo > span { font-size: 19px; }
+  .mobile-map-header .archi2go-logo { font-size: 13px; }
   .mobile-city-button {
     min-height: 48px;
     display: inline-flex;

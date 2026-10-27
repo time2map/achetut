@@ -52,6 +52,14 @@ export function Icon({ name }: { name: IconName }) {
         />
       </>
     ),
+    menu: (
+      <>
+        <path d="M4 7h16" />
+        <path d="M4 12h16" />
+        <path d="M4 17h16" />
+      </>
+    ),
+    message: <path d="M4 5h16v11H10l-6 4V5Z" />,
     search: (
       <>
         <circle

@@ -1019,8 +1019,8 @@ export function DesktopMapScreen({ routeBase: routeBaseProp = '' }: DesktopMapSc
             </div>
             <span className="eyebrow">Independent city guides</span>
             <h2 id="about-title">Good places, with a reason to go.</h2>
-            <p>Archi2go gathers architecture, public space and unusual city stories into one concise map. Every place is researched and prepared in advance — nothing here is generated on demand.</p>
-            <div className="about-links"><a href="mailto:feedback@time2map.com">Send feedback</a><a href="/privacy">Privacy policy</a><a href="#credits">Photo credits & sources</a></div>
+            <p>Archi2go gathers architecture, public spaces and unusual city stories into one concise map. Every place is thoughtfully selected, researched and presented with a clear reason to visit.</p>
+            <div className="about-links"><button type="button" disabled>Contact us</button><a href="/privacy">Privacy policy</a><a href="#credits">Photo credits & sources</a></div>
             <small>Version 1.0 — Map data © OpenStreetMap contributors</small>
           </section>
         </div>

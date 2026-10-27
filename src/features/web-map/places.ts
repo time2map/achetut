@@ -64,6 +64,10 @@ export const CATEGORY_META: Record<PlaceCategory, { label: string; color: string
   unusual: { label: 'Unusual', color: '#715579' }
 };
 
+export function placeByline(place: Pick<CuratedPlace, 'architect' | 'year'>) {
+  return [place.architect, place.year].filter(Boolean).join(' · ');
+}
+
 export const EUROPE_OVERVIEW = {
   center: [4.2, 48.2] as [number, number],
   zoom: 4.15,

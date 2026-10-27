@@ -2,7 +2,11 @@ import type { Map as MapboxMap } from 'mapbox-gl';
 import type { CuratedPlace } from '../places';
 import {
   CITY_ZOOM,
+  COMPACT_PIN_ZOOM,
+  MAX_PHOTO_PINS,
+  PHOTO_PIN_ALWAYS_ZOOM,
   MOBILE_QUERY_WIDTH,
+  PHOTO_PIN_GAP,
   PLACE_3D_BEARING,
   PLACE_3D_PITCH,
   PLACE_3D_ZOOM,
@@ -92,6 +96,27 @@ export function isPlaceInsideBounds(place: CuratedPlace, bounds: MapViewportBoun
   return longitude >= bounds.west && longitude <= bounds.east && latitude >= bounds.south && latitude <= bounds.north;
 }
 
+// Places arrive in guide-rank order, so the first non-overlapping ones in view get the photo pins.
+export function pickPhotoPlaceIds(map: MapboxMap, places: CuratedPlace[], skipId: string | null) {
+  const visible = map.getBounds();
+  const ids = new Set<string>();
+  if (!visible) return ids;
+  const alwaysPhoto = map.getZoom() >= PHOTO_PIN_ALWAYS_ZOOM;
+  const size = (map.getZoom() < COMPACT_PIN_ZOOM ? 44 * 0.8 : 44) + PHOTO_PIN_GAP;
+  const taken: { x: number; y: number }[] = [];
+  for (const place of places) {
+    if (!alwaysPhoto && ids.size >= MAX_PHOTO_PINS) break;
+    if (place.id === skipId || !visible.contains(place.coordinates)) continue;
+    const { x, y } = map.project(place.coordinates);
+    // Pins grow upward from the point, so one right under the top edge would be cropped.
+    if (!alwaysPhoto && y < size) continue;
+    if (!alwaysPhoto && taken.some((point) => Math.abs(point.x - x) < size && Math.abs(point.y - y) < size)) continue;
+    taken.push({ x, y });
+    ids.add(place.id);
+  }
+  return ids;
+}
+
 export const applied3dObjects = new WeakMap<MapboxMap, boolean>();
 
 export function setShow3dObjects(map: MapboxMap, show: boolean) {
@@ -102,6 +127,33 @@ export function setShow3dObjects(map: MapboxMap, show: boolean) {
   } catch {
     // Styles without the Standard basemap import don't expose this config.
   }
+}
+
+const compassBound = new WeakSet<MapboxMap>();
+
+// Same cutoff as the zoom handler: above this the camera is already in the tilted 3D plane.
+const PITCHED_PLANE = 20;
+
+// North, and the place-focus tilt when the camera is already pitched. A flat map only loses its bearing.
+export function bindCompassReset(map: MapboxMap) {
+  if (compassBound.has(map)) return;
+  compassBound.add(map);
+  map.getContainer().addEventListener(
+    'click',
+    (event) => {
+      const target = event.target;
+      if (!(target instanceof Element) || !target.closest('.mapboxgl-ctrl-compass')) return;
+      event.preventDefault();
+      event.stopPropagation();
+      map.stop();
+      map.easeTo({
+        bearing: 0,
+        pitch: map.getPitch() > PITCHED_PLANE ? PLACE_3D_PITCH : 0,
+        duration: 450
+      });
+    },
+    true
+  );
 }
 
 export function focusPlaceCamera(map: MapboxMap, place: CuratedPlace, buildings3d: boolean) {

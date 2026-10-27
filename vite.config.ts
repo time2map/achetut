@@ -1,3 +1,5 @@
+import { execSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath, URL } from 'node:url';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
@@ -21,11 +23,26 @@ function mapboxWorkerReferrerFallback(): Plugin {
   };
 }
 
+const APP_VERSION: string = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')).version;
+
+function gitCommit() {
+  try {
+    return execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+  } catch {
+    return '';
+  }
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
 
   return {
     plugins: [react(), tailwindcss(), mapboxWorkerReferrerFallback()],
+    define: {
+      __APP_VERSION__: JSON.stringify(APP_VERSION),
+      __APP_COMMIT__: JSON.stringify(gitCommit()),
+      __APP_BUILD_DATE__: JSON.stringify(new Date().toISOString().slice(0, 10))
+    },
     envPrefix: ['VITE_', 'EXPO_PUBLIC_'],
     server: {
       proxy: {

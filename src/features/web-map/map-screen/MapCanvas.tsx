@@ -1,4 +1,4 @@
-import type { MutableRefObject } from 'react';
+import { useEffect, useRef, type MutableRefObject } from 'react';
 import type { Map as MapboxMap } from 'mapbox-gl';
 import Map, { AttributionControl, NavigationControl, Popup } from 'react-map-gl/mapbox';
 import type { CuratedCity, CuratedPlace } from '../places';
@@ -7,25 +7,43 @@ import {
   MAPBOX_STYLE,
   MAPBOX_TOKEN,
   PLACE_3D_BEARING,
+  MAP_MAX_PITCH,
   PLACE_3D_PITCH,
   PLACE_ZOOM,
   BUILDINGS_3D_MIN_ZOOM,
+  POI_LABELS_MIN_ZOOM,
   type MapViewportBounds,
   type SheetLevel
 } from './config';
 import {
   applied3dObjects,
+  bindCompassReset,
   getBufferedMapBounds,
   getMapPadding,
   getPlace3dZoom
 } from './mapCamera';
+import { applyMapDesign, getMapDesign, type MapDesignId } from './mapDesigns';
 import { Buildings3DControl, HoverPreview, MapPlaceMarker } from './MapMarkers';
+
+const currentBasemap = getMapDesign('current').basemap;
+
+function syncPoiVisibility(map: MapboxMap) {
+  try {
+    const visible = map.getZoom() >= POI_LABELS_MIN_ZOOM;
+    if (map.getConfigProperty('basemap', 'showPointOfInterestLabels') !== visible) {
+      map.setConfigProperty('basemap', 'showPointOfInterestLabels', visible);
+    }
+  } catch {
+    // Classic styles have no POI-label config.
+  }
+}
 
 export function MapCanvas({
   activeCity,
   selectedPlace,
   selectedPlaceId,
   renderedMapPlaces,
+  photoPlaceIds,
   previewPlace,
   previewPlaceId,
   highlightedPlaceId,
@@ -46,12 +64,14 @@ export function MapCanvas({
   onToggleBuildings3d,
   onMapClick,
   onDragStart,
-  changeSheetLevel
+  changeSheetLevel,
+  mapDesignId
 }: {
   activeCity: CuratedCity;
   selectedPlace: CuratedPlace | null;
   selectedPlaceId: string | null;
   renderedMapPlaces: CuratedPlace[];
+  photoPlaceIds: ReadonlySet<string>;
   previewPlace: CuratedPlace | null;
   previewPlaceId: string | null;
   highlightedPlaceId: string | null;
@@ -73,10 +93,26 @@ export function MapCanvas({
   onMapClick: () => void;
   onDragStart: () => void;
   changeSheetLevel: (level: SheetLevel) => void;
+  mapDesignId: MapDesignId;
 }) {
+  const mapDesignIdRef = useRef(mapDesignId);
+  const appliedDesignRef = useRef<MapDesignId | null>(null);
+  mapDesignIdRef.current = mapDesignId;
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || appliedDesignRef.current === null || appliedDesignRef.current === mapDesignId) return;
+    appliedDesignRef.current = mapDesignId;
+    applyMapDesign(map, mapDesignId, buildings3dRef.current);
+  }, [buildings3dRef, mapDesignId, mapRef]);
+  // A list hover lifts a dot into a photo pin; a map hover keeps the dot so the target doesn't move under the cursor.
+  const isDotPlace = (placeId: string) =>
+    placeId !== selectedPlaceId &&
+    !photoPlaceIds.has(placeId) &&
+    !(highlightedPlaceId === placeId && previewPlaceId !== placeId);
   return (
     <div
-      className={`v2-map-canvas${isCompactPins ? ' is-compact-pins' : ''}${selectedPlaceId ? ' has-selection' : ''}`}
+      className={`v2-map-canvas${mapDesignId === 'white' ? ' is-map-design-white' : ''}${isCompactPins ? ' is-compact-pins' : ''}${selectedPlaceId ? ' has-selection' : ''}`}
       role="region"
       aria-label={`Map of curated places in ${activeCity.name}`}>
       {MAPBOX_TOKEN ? (
@@ -93,9 +129,9 @@ export function MapCanvas({
           }}
           minZoom={9}
           maxZoom={19}
-          maxPitch={65}
-          dragRotate={!isMobileSheet}
-          touchPitch={false}
+          maxPitch={MAP_MAX_PITCH}
+          dragRotate
+          touchPitch={isMobileSheet}
           fadeDuration={isMobileSheet ? 0 : 150}
           attributionControl={false}
           logoPosition="bottom-right"
@@ -104,47 +140,25 @@ export function MapCanvas({
           reuseMaps
           config={{
             basemap: {
-              lightPreset: 'day',
-              theme: 'faded',
-              font: 'Inter',
-              colorLand: '#edf1ee',
-              colorWater: '#c9dcda',
-              colorGreenspace: '#d9e6dd',
-              colorCommercial: '#ebe9e4',
-              colorEducation: '#e7ebe8',
-              colorMedical: '#efe6e4',
-              colorIndustrial: '#dfe4e1',
-              colorRoads: '#f8faf8',
-              colorTrunks: '#f2f5f2',
-              colorMotorways: '#e8ece9',
-              colorBuildings: '#c9c0b7',
-              colorPlaceLabels: '#17201e',
-              colorRoadLabels: '#626e6a',
-              // Basemap POIs stay sparse so curated pins keep the visual lead.
-              showPointOfInterestLabels: true,
-              densityPointOfInterestLabels: 1,
-              showPlaceLabels: false,
-              showRoadLabels: true,
-              showPedestrianRoads: true,
-              showTransitLabels: false,
-              showAdminBoundaries: false,
-              showLandmarkIcons: false,
-              showLandmarkIconLabels: false,
-              showIndoor: false,
-              showIndoorLabels: false,
-              show3dObjects: buildings3d,
-              show3dBuildings: true,
-              show3dLandmarks: true,
-              show3dTrees: false,
-              show3dFacades: false
+              ...currentBasemap,
+              show3dObjects: buildings3d
             }
           }}
+
           onLoad={(event) => {
             mapRef.current = event.target;
+            bindCompassReset(event.target);
             event.target.setPadding(getMapPadding());
             const zoom = event.target.getZoom();
             updateZoomModes(zoom);
             applied3dObjects.set(event.target, buildings3dRef.current);
+            syncPoiVisibility(event.target);
+            if (appliedDesignRef.current !== mapDesignIdRef.current) {
+              appliedDesignRef.current = mapDesignIdRef.current;
+              if (mapDesignIdRef.current !== 'current') {
+                applyMapDesign(event.target, mapDesignIdRef.current, buildings3dRef.current);
+              }
+            }
             onViewportBounds(getBufferedMapBounds(event.target));
             onMapReady();
             onMapError(null);
@@ -163,6 +177,7 @@ export function MapCanvas({
             updateZoomModes(event.viewState.zoom);
           }}
           onZoomEnd={(event) => {
+            syncPoiVisibility(event.target);
             updateZoomModes(event.viewState.zoom);
             if (!isUserZoomingRef.current) return;
             isUserZoomingRef.current = false;
@@ -179,7 +194,8 @@ export function MapCanvas({
               });
               return;
             }
-            if (map.getPitch() > 0.5) {
+            // On the phone a hand-set tilt stays; the desktop overview drops back to top-down.
+            if (!isMobileSheet && map.getPitch() > 0.5) {
               map.stop();
               map.easeTo({ pitch: 0, duration: 180 });
             }
@@ -195,7 +211,8 @@ export function MapCanvas({
           }}>
           <NavigationControl
             position="top-right"
-            showCompass={false}
+            showCompass
+            visualizePitch
           />
           <Buildings3DControl
             enabled={buildings3d}
@@ -212,6 +229,7 @@ export function MapCanvas({
                 place={place}
                 selected={selected}
                 highlighted={highlighted}
+                dot={isDotPlace(place.id)}
                 onSelect={onSelectPlace}
                 onHoverChange={onPreviewHover}
               />
@@ -228,7 +246,7 @@ export function MapCanvas({
               closeOnClick={false}
               focusAfterOpen={false}
               maxWidth="320px"
-              offset={isCompactPins ? 58 : 74}>
+              offset={isDotPlace(previewPlace.id) ? 26 : isCompactPins ? 72 : 90}>
               <HoverPreview place={previewPlace} />
             </Popup>
           ) : null}

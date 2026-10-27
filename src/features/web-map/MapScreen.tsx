@@ -8,6 +8,9 @@ import {
   type Ref
 } from 'react';
 import type { Map as MapboxMap } from 'mapbox-gl';
+import '@fontsource-variable/instrument-sans/wdth.css';
+import '@fontsource/ibm-plex-mono/latin-400.css';
+import '@fontsource/ibm-plex-mono/latin-500.css';
 import './design-two.css';
 
 import { CityNotFoundError, defaultCityId, loadCity, loadCitySummaries } from './data/cityData';
@@ -21,6 +24,7 @@ import {
   FILTERS,
   HOVER_PREVIEW_QUERY,
   MAPBOX_TOKEN,
+  MAX_PHOTO_PINS,
   PLACE_3D_BEARING,
   PLACE_3D_PITCH,
   PLACE_ZOOM,
@@ -36,9 +40,12 @@ import {
   focusPlaceCamera,
   getMapPadding,
   isPlaceInsideBounds,
+  pickPhotoPlaceIds,
   setPaddingKeepingView,
   setShow3dObjects
 } from './map-screen/mapCamera';
+import { AboutDialog, MapDesignMenu } from './map-screen/AppMenu';
+import type { MapDesignId } from './map-screen/mapDesigns';
 import { PhotoLightbox } from './map-screen/PhotoLightbox';
 import { PlacesSidebar } from './map-screen/PlacesSidebar';
 import { cityPath, parseRoute, placePath, requestedCityId } from './map-screen/routes';
@@ -156,6 +163,9 @@ function MapScreenContent({ cities, initialCity }: { cities: CitySummary[]; init
     () => (initialRoute.placeId ? PLACE_ZOOM : CITY_ZOOM) < COMPACT_PIN_ZOOM
   );
   const [lightbox, setLightbox] = useState<{ place: CuratedPlace; index: number } | null>(null);
+  const [aboutOpen, setAboutOpen] = useState(false);
+  const [mapDesignId, setMapDesignId] = useState<MapDesignId>('current');
+  const closeAbout = useCallback(() => setAboutOpen(false), []);
   const [isCityPending, startCityTransition] = useTransition();
   const [previewPlaceId, setPreviewPlaceId] = useState<string | null>(null);
   const [highlightedPlaceId, setHighlightedPlaceId] = useState<string | null>(null);
@@ -233,6 +243,12 @@ function MapScreenContent({ cities, initialCity }: { cities: CitySummary[]; init
         : visiblePlaces,
     [mapViewportBounds, selectedPlaceId, visiblePlaces]
   );
+  // Recomputed per settled viewport (mapViewportBounds changes on moveend), not per frame.
+  const photoPlaceIds = useMemo(() => {
+    const map = mapRef.current;
+    if (!map || !mapViewportBounds) return new Set(visiblePlaces.slice(0, MAX_PHOTO_PINS).map((place) => place.id));
+    return pickPhotoPlaceIds(map, visiblePlaces, selectedPlaceId);
+  }, [mapViewportBounds, selectedPlaceId, visiblePlaces]);
   selectedPlaceRef.current = selectedPlace;
   const previewPlace =
     previewPlaceId && previewPlaceId !== selectedPlaceId
@@ -440,13 +456,13 @@ function MapScreenContent({ cities, initialCity }: { cities: CitySummary[]; init
   }, [asideRef, isMobileSheetRef, selectedPlaceId, sheetHeightsRef, sheetLevelRef]);
 
   useEffect(() => {
-    if (!selectedPlaceId || lightbox) return;
+    if (!selectedPlaceId || lightbox || aboutOpen) return;
     const backOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && !event.defaultPrevented) clearSelection();
     };
     window.addEventListener('keydown', backOnEscape);
     return () => window.removeEventListener('keydown', backOnEscape);
-  }, [clearSelection, lightbox, selectedPlaceId]);
+  }, [aboutOpen, clearSelection, lightbox, selectedPlaceId]);
 
   const resetSelectionRoute = () => {
     setSelectedPlaceId(null);
@@ -478,6 +494,7 @@ function MapScreenContent({ cities, initialCity }: { cities: CitySummary[]; init
           selectedPlace={selectedPlace}
           selectedPlaceId={selectedPlaceId}
           renderedMapPlaces={renderedMapPlaces}
+          photoPlaceIds={photoPlaceIds}
           previewPlace={previewPlace}
           previewPlaceId={previewPlaceId}
           highlightedPlaceId={highlightedPlaceId}
@@ -504,6 +521,7 @@ function MapScreenContent({ cities, initialCity }: { cities: CitySummary[]; init
               }}
           onDragStart={() => setPreviewPlaceId(null)}
           changeSheetLevel={changeSheetLevel}
+          mapDesignId={mapDesignId}
         />
 
         <PlacesSidebar
@@ -531,7 +549,13 @@ function MapScreenContent({ cities, initialCity }: { cities: CitySummary[]; init
           onChangeCategory={changeCategory}
           onSetQuery={setQuery}
           onOpenPhoto={(index) => detailPlace && setLightbox({ place: detailPlace, index })}
+          onOpenAbout={() => setAboutOpen(true)}
           onSetHighlightedPlaceId={setHighlightedPlaceId}
+        />
+
+        <MapDesignMenu
+          value={mapDesignId}
+          onChange={setMapDesignId}
         />
 
         {!MAPBOX_TOKEN && (
@@ -586,6 +610,7 @@ function MapScreenContent({ cities, initialCity }: { cities: CitySummary[]; init
             onClose={closeLightbox}
           />
         ) : null}
+        {aboutOpen ? <AboutDialog onClose={closeAbout} /> : null}
       </main>
     </PreviewLoadingContext.Provider>
   );
