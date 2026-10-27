@@ -14,7 +14,7 @@ const standardChrome = {
   showPointOfInterestLabels: false,
   densityPointOfInterestLabels: 1,
   showPlaceLabels: false,
-  showRoadLabels: false,
+  showRoadLabels: true,
   showPedestrianRoads: false,
   showHdRoads: false,
   showTransitLabels: false,
