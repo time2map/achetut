@@ -73,15 +73,19 @@ function markerCoordinates(place: ApiPlace): [number, number] | null {
 
 export async function fetchApiCitySummaries(): Promise<CitySummary[]> {
   const { cities } = await getJson<{ cities: ApiCity[] }>('/api/cities');
-  return cities.map((city) => ({
-    id: city.id,
-    name: city.name,
-    country: cityCountry(city.id),
-    updated: city.updated,
-    placeCount: city.places,
-    cover: city.cover ? adaptPhoto(city.cover) : undefined,
-    art: cityArt(city.id)
-  }));
+  return cities.map((city) => {
+    const [west, south, east, north] = city.bbox;
+    return {
+      id: city.id,
+      name: city.name,
+      country: cityCountry(city.id),
+      updated: city.updated,
+      placeCount: city.places,
+      cover: city.cover ? adaptPhoto(city.cover) : undefined,
+      art: cityArt(city.id),
+      center: [(west + east) / 2, (south + north) / 2]
+    };
+  });
 }
 
 export async function fetchApiCity(cityId: string): Promise<CuratedCity> {

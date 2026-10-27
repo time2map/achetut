@@ -41,10 +41,10 @@ export type CitySummary = {
   placeCount: number;
   cover?: PlacePhoto;
   art: string;
+  center: [longitude: number, latitude: number];
 };
 
 export type CuratedCity = CitySummary & {
-  center: [longitude: number, latitude: number];
   places: CuratedPlace[];
 };
 

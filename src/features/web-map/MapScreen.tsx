@@ -34,6 +34,7 @@ import {
   type MapViewportBounds
 } from './map-screen/config';
 import { isKeyboardNavigation } from './map-screen/inputModality';
+import { detectInitialCityId } from './map-screen/cityLocation';
 import { MapCanvas } from './map-screen/MapCanvas';
 import {
   focusCityCamera,
@@ -65,17 +66,26 @@ export function MapScreen() {
   useEffect(() => {
     let cancelled = false;
     setError(null);
-    // Start the likely city in parallel with the city list instead of after it.
-    const requested = requestedCityId();
+    const shouldDetectLocation = window.location.pathname === '/';
+    // A root launch is location-driven; only explicit city routes are safe to preload.
+    const requested = shouldDetectLocation ? null : requestedCityId();
     if (requested) loadCity(requested).catch(() => undefined);
     loadCitySummaries()
       .then(async (cities) => {
         const fallbackId = defaultCityId(cities);
         if (!fallbackId) throw new Error('No city guides found.');
-        const { cityId } = parseRoute(
-          cities.map((city) => city.id),
-          fallbackId
-        );
+        const cityIds = cities.map((city) => city.id);
+        let { cityId } = parseRoute(cityIds, fallbackId);
+
+        if (shouldDetectLocation) {
+          // Warm the guaranteed fallback while the browser resolves the optional location permission.
+          const fallbackRequest = loadCity(fallbackId);
+          cityId = await detectInitialCityId(cities, fallbackId);
+          const initialCity = cityId === fallbackId ? await fallbackRequest : await loadCity(cityId);
+          if (!cancelled) setData({ cities, initialCity });
+          return;
+        }
+
         const initialCity = await loadCity(cityId);
         if (!cancelled) setData({ cities, initialCity });
       })
