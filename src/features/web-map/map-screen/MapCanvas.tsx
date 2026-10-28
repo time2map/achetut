@@ -26,7 +26,7 @@ import {
   getPlace3dZoom,
   startPlaceCameraOrbit
 } from './mapCamera';
-import { applyMapDesign, getMapDesign, type MapDesignId } from './mapDesigns';
+import { applyMapDesign, ensureCustomRoadLabels, getMapDesign, type MapDesignId } from './mapDesigns';
 import { Buildings3DControl, HoverPreview, MapPlaceMarker, OrbitControl } from './MapMarkers';
 
 const currentBasemap = getMapDesign('survey').basemap;
@@ -184,8 +184,7 @@ export function MapCanvas({
 
       const { x, y } = map.project(place.coordinates);
       const promotedToPhoto =
-        !selected &&
-        (photoPlaceIds.has(place.id) || (highlightedPlaceId === place.id && previewPlaceId !== place.id));
+        !selected && (photoPlaceIds.has(place.id) || (highlightedPlaceId === place.id && previewPlaceId !== place.id));
       if (selected) {
         occupied.push({ left: x - 21, right: x + 21, top: y - 21, bottom: y + 21 });
       } else if (promotedToPhoto) {
@@ -205,15 +204,7 @@ export function MapCanvas({
       visibleIds.add(place.id);
     }
     return visibleIds;
-  }, [
-    activeCategory,
-    highlightedPlaceId,
-    mapRef,
-    photoPlaceIds,
-    previewPlaceId,
-    renderedMapPlaces,
-    selectedPlaceId
-  ]);
+  }, [activeCategory, highlightedPlaceId, mapRef, photoPlaceIds, previewPlaceId, renderedMapPlaces, selectedPlaceId]);
   return (
     <div
       className={`v2-map-canvas${mapDesignId === 'white' || mapDesignId === 'classic' ? ' is-map-design-white' : ''}${isCompactPins ? ' is-compact-pins' : ''}${COMPACT_MARKER_MODE === 'category' ? ' marker-mode-category' : ' marker-mode-neutral'} dot-pin-${DOT_PIN_STYLE}${activeCategory !== 'all' ? ' category-filter-active' : ''}${selectedPlaceId ? ' has-selection' : ''}`}
@@ -248,16 +239,16 @@ export function MapCanvas({
               show3dObjects: buildings3d
             }
           }}
-
-            onLoad={(event) => {
-              mapRef.current = event.target;
-              setMapLoaded(true);
+          onLoad={(event) => {
+            mapRef.current = event.target;
+            setMapLoaded(true);
             bindCompassReset(event.target);
             event.target.setPadding(getMapPadding());
             const zoom = event.target.getZoom();
             updateZoomModes(zoom);
             applied3dObjects.set(event.target, buildings3dRef.current);
             syncPoiVisibility(event.target);
+            ensureCustomRoadLabels(event.target, mapDesignIdRef.current);
             if (appliedDesignRef.current !== mapDesignIdRef.current) {
               appliedDesignRef.current = mapDesignIdRef.current;
               if (mapDesignIdRef.current !== 'survey') {

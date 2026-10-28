@@ -6,6 +6,8 @@ import { applied3dObjects, setShow3dObjects } from './mapCamera';
 
 const architecturalMapLut = architecturalMapLutDataUrl.replace(/^data:image\/png;base64,/, '');
 const surveyMapLut = surveyMapLutDataUrl.replace(/^data:image\/png;base64,/, '');
+const ROAD_LABEL_SOURCE_ID = 'archi2go-streets';
+const ROAD_LABEL_LAYER_ID = 'archi2go-road-labels';
 
 // Shared Standard-basemap flags so a preset switch doesn't bring back labels the guide hides.
 const standardChrome = {
@@ -16,7 +18,7 @@ const standardChrome = {
   showPointOfInterestLabels: false,
   densityPointOfInterestLabels: 1,
   showPlaceLabels: false,
-  showRoadLabels: true,
+  showRoadLabels: false,
   showPedestrianRoads: false,
   showHdRoads: false,
   showTransitLabels: false,
@@ -158,7 +160,7 @@ export const MAP_DESIGNS: MapDesign[] = [
     basemap: {
       ...standardChrome,
       // High-key architectural model: small tonal steps keep geometry legible without adding colour noise.
-      showRoadLabels: true,
+      showRoadLabels: false,
       lightPreset: 'day',
       theme: 'monochrome', // 'monochrome', 'faded' , 'white' 
       colorLand: 'rgb(211, 211, 211)', //rgb(241, 242, 242)
@@ -184,6 +186,74 @@ export function getMapDesign(id: MapDesignId) {
   return MAP_DESIGNS.find((design) => design.id === id) ?? MAP_DESIGNS[0];
 }
 
+export function ensureCustomRoadLabels(map: MapboxMap, id: MapDesignId) {
+  const design = getMapDesign(id);
+  const configuredColor = design.basemap?.colorRoadLabels;
+  const textColor = typeof configuredColor === 'string' ? configuredColor : '#d8d8d8';
+  const isLight = id === 'white' || id === 'classic' || id === 'light';
+
+  if (!map.getSource(ROAD_LABEL_SOURCE_ID)) {
+    map.addSource(ROAD_LABEL_SOURCE_ID, {
+      type: 'vector',
+      url: 'mapbox://mapbox.mapbox-streets-v8'
+    });
+  }
+
+  if (!map.getLayer(ROAD_LABEL_LAYER_ID)) {
+    map.addLayer({
+      id: ROAD_LABEL_LAYER_ID,
+      type: 'symbol',
+      source: ROAD_LABEL_SOURCE_ID,
+      'source-layer': 'road',
+      slot: 'top',
+      minzoom: 11.5,
+      filter: [
+        'all',
+        ['==', ['geometry-type'], 'LineString'],
+        ['has', 'name'],
+        [
+          'any',
+          [
+            'match',
+            ['get', 'class'],
+            ['motorway', 'trunk', 'primary', 'secondary', 'tertiary'],
+            true,
+            false
+          ],
+          ['>=', ['coalesce', ['get', 'len'], 0], 140]
+        ]
+      ],
+      layout: {
+        'symbol-placement': 'line',
+        'symbol-spacing': 720,
+        'text-field': ['get', 'name'],
+        'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'],
+        'text-size': ['interpolate', ['linear'], ['zoom'], 11.5, 10, 15, 12, 18, 14],
+        'text-letter-spacing': 0.025,
+        'text-max-angle': 35,
+        'text-padding': 28,
+        'text-keep-upright': true,
+        'text-pitch-alignment': 'viewport',
+        'text-rotation-alignment': 'map'
+      },
+      paint: {
+        'text-color': textColor,
+        'text-halo-color': isLight ? 'rgba(245, 245, 245, 0.86)' : 'rgba(24, 24, 24, 0.82)',
+        'text-halo-width': 0.8,
+        'text-halo-blur': 0.6
+      }
+    });
+    return;
+  }
+
+  map.setPaintProperty(ROAD_LABEL_LAYER_ID, 'text-color', textColor);
+  map.setPaintProperty(
+    ROAD_LABEL_LAYER_ID,
+    'text-halo-color',
+    isLight ? 'rgba(245, 245, 245, 0.86)' : 'rgba(24, 24, 24, 0.82)'
+  );
+}
+
 // Reloads the style so colour overrides from the previous preset don't linger, then camera stays put.
 export function applyMapDesign(map: MapboxMap, id: MapDesignId, buildings3d: boolean) {
   const design = getMapDesign(id);
@@ -198,6 +268,7 @@ export function applyMapDesign(map: MapboxMap, id: MapDesignId, buildings3d: boo
       }
     }
     design.configureStyle?.(map);
+    ensureCustomRoadLabels(map, id);
     applied3dObjects.delete(map);
     setShow3dObjects(map, buildings3d);
     try {
