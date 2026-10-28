@@ -1390,6 +1390,7 @@
 }
 .v2-pin[hidden] { display: none; }
 .v2-pin.is-selected { z-index: 3; }
+/* Topic-filtered dots use real alpha; MapCanvas culls overlaps before they reach this layer. */
 .v2-pin-body {
   position: absolute;
   top: 0;
@@ -1527,8 +1528,8 @@
     0 0 18px 5px rgba(241, 239, 233, .42),
     0 0 40px 10px rgba(241, 239, 233, .16);
 }
-.v2-map-canvas.has-selection .v2-pin:not(.is-selected) .v2-pin-stem,
-.v2-map-canvas.has-selection .v2-pin:not(.is-selected) .v2-pin-point { background: var(--v2-faint); }
+.v2-map-canvas.has-selection .v2-pin:not(.is-selected):not(.is-dot) .v2-pin-stem,
+.v2-map-canvas.has-selection .v2-pin:not(.is-selected):not(.is-dot) .v2-pin-point { background: var(--v2-faint); }
 .v2-map-canvas.has-selection .v2-pin:not(.is-selected) .v2-pin-stem { box-shadow: none; }
 
 .is-compact-pins .v2-pin:not(.is-selected) .v2-pin-body { transform: scale(.8); }
@@ -1542,49 +1543,82 @@
 .v2-pin-point,
 .v2-pin.is-dot { pointer-events: auto; }
 
-/* Places beyond the viewport's top photo pins: a survey point centred on the coordinate,
-   inside a 24px hit area. The dark ring keeps it legible over pale building footprints. */
+/* Places beyond the viewport's top photo pins: a square centred on the coordinate,
+   inside a 24px hit area. Style via DOT_PIN_STYLE → .dot-pin-light | .dot-pin-dark. */
 .v2-pin.is-dot {
   width: 24px;
   height: 24px;
   transform: translateY(12px);
 }
 .v2-pin.is-dot .v2-pin-point {
-  top: 7px;
+  --v2-dot-scale: 1;
+  --v2-dot-base-fill: #fff;
+  --v2-dot-base-stroke: #111;
+  --v2-dot-fill: var(--v2-dot-base-fill);
+  --v2-dot-stroke: var(--v2-dot-base-stroke);
+  top: 5px;
   bottom: auto;
-  left: 7px;
-  width: 10px;
-  height: 10px;
+  left: 5px;
+  width: 12px;
+  height: 12px;
   pointer-events: none;
-  background: var(--v2-ink);
+  border-radius: 0;
+  background: var(--v2-dot-fill);
   box-shadow:
-    0 0 0 2px var(--v2-canvas),
-    0 0 0 3.5px rgba(255, 255, 255, .9),
-    0 0 8px 2px rgba(241, 239, 233, .32),
-    0 0 16px 4px rgba(241, 239, 233, .1),
-    0 2px 6px rgba(0, 0, 0, .7);
-  transition: transform 160ms var(--v2-ease), background-color 160ms ease, box-shadow 160ms ease;
+    0 0 0 1.5px var(--v2-dot-stroke),
+    0 0 8px 2px rgba(255, 255, 255, .72),
+    0 1px 6px rgba(0, 0, 0, .34);
+  filter: none;
+  opacity: 1;
+  transform: scale(var(--v2-dot-scale));
+  transition: transform 160ms var(--v2-ease), opacity 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
 }
-.v2-map-canvas.has-selection .v2-pin.is-dot .v2-pin-point {
-  background: var(--v2-muted);
+.v2-map-canvas.dot-pin-dark .v2-pin.is-dot .v2-pin-point {
+  --v2-dot-base-fill: #111;
+  --v2-dot-base-stroke: #fff;
+}
+/* Selection de-emphasis stays opaque; topic filtering below uses real transparency. */
+.v2-map-canvas.has-selection .v2-pin.is-dot:not(.is-highlighted):not(.is-selected) .v2-pin-point {
+  --v2-dot-fill: color-mix(in srgb, var(--v2-dot-base-fill) 34%, var(--v2-canvas) 66%);
+  --v2-dot-stroke: color-mix(in srgb, var(--v2-dot-base-stroke) 46%, var(--v2-canvas) 54%);
   box-shadow:
-    0 0 0 2px var(--v2-canvas),
-    0 0 0 3.5px rgba(241, 239, 233, .45),
-    0 0 8px 2px rgba(241, 239, 233, .18);
+    0 0 0 1.5px var(--v2-dot-stroke),
+    0 0 6px 1px rgba(255, 255, 255, .28),
+    0 1px 4px rgba(0, 0, 0, .18);
+}
+.v2-pin.is-dot.is-filtered:not(.is-selected) .v2-pin-point {
+  opacity: .38;
+  box-shadow:
+    0 0 0 1.5px var(--v2-dot-stroke),
+    0 0 7px 1px rgba(255, 255, 255, .42),
+    0 1px 4px rgba(0, 0, 0, .16);
+}
+.v2-map-canvas.category-filter-active .v2-pin.is-dot:not(.is-filtered):not(.is-selected) .v2-pin-point {
+  top: 4px;
+  left: 4px;
+  width: 14px;
+  height: 14px;
+  box-shadow:
+    0 0 0 1.5px var(--v2-dot-stroke),
+    0 0 10px 3px rgba(255, 255, 255, .88),
+    0 1px 7px rgba(0, 0, 0, .32);
 }
 .v2-pin.is-dot.is-highlighted .v2-pin-point,
 .v2-map-canvas.has-selection .v2-pin.is-dot.is-highlighted .v2-pin-point {
-  background: var(--v2-accent-hover);
+  opacity: .82;
   box-shadow:
-    0 0 0 2px var(--v2-canvas),
-    0 0 0 4px var(--v2-ink),
-    0 0 10px 2px rgba(241, 239, 233, .36),
-    0 0 20px 5px rgba(241, 239, 233, .12),
-    0 2px 8px rgba(0, 0, 0, .7);
-  transform: scale(1.3);
+    0 0 0 1.5px var(--v2-dot-stroke),
+    0 0 11px 3px rgba(255, 255, 255, .9),
+    0 2px 7px rgba(0, 0, 0, .3);
+  transform: scale(calc(var(--v2-dot-scale) * 1.2));
 }
 
-/* White basemap: empty markers need a dark material and a grounded shadow against pale geometry. */
+/* Keep overview dots quiet; once the map leaves compact mode they return to full size. */
+.v2-map-canvas.is-compact-pins .v2-pin.is-dot .v2-pin-point {
+  --v2-dot-scale: .84;
+}
+
+/* White basemap: empty photo markers need a dark material against pale geometry. */
 .v2-map-canvas.is-map-design-white .v2-pin .v2-pin-frame:not(:has(.v2-pin-photo.has-image)) {
   background: #202020;
   box-shadow:
@@ -1596,13 +1630,22 @@
 .v2-map-canvas.is-map-design-white .v2-pin .v2-pin-photo:not(.has-image) {
   background: #202020;
 }
-.v2-map-canvas.is-map-design-white .v2-pin.is-dot:not(.is-highlighted) .v2-pin-point {
-  background: #181818;
-  box-shadow:
-    0 0 0 2px rgba(255, 255, 255, .98),
-    0 0 0 3.5px rgba(24, 24, 24, .88),
-    0 5px 14px rgba(0, 0, 0, .48),
-    0 0 18px 3px rgba(0, 0, 0, .18);
+
+/* Optional category palette: restrained colours preserve the map's monochrome hierarchy. */
+.v2-map-canvas.marker-mode-category .v2-pin.is-dot.is-architecture .v2-pin-point {
+  --v2-dot-base-fill: #5d858d;
+}
+.v2-map-canvas.marker-mode-category .v2-pin.is-dot.is-city-core .v2-pin-point {
+  --v2-dot-base-fill: #a16a63;
+}
+.v2-map-canvas.marker-mode-category .v2-pin.is-dot.is-housing .v2-pin-point {
+  --v2-dot-base-fill: #9a7d5d;
+}
+.v2-map-canvas.marker-mode-category .v2-pin.is-dot.is-parks .v2-pin-point {
+  --v2-dot-base-fill: #6d886f;
+}
+.v2-map-canvas.marker-mode-category .v2-pin.is-dot.is-unusual .v2-pin-point {
+  --v2-dot-base-fill: #80708a;
 }
 
 .design-variant-two .v2-pin:focus-visible { outline: 0; }
@@ -1628,7 +1671,7 @@
     box-shadow: var(--pin-glow-strong);
   }
   .is-compact-pins .v2-pin:not(.is-selected):hover .v2-pin-body { transform: translateY(-1px) scale(.94); }
-  .v2-pin.is-dot:hover .v2-pin-point { transform: scale(1.3); }
+  .v2-pin.is-dot:hover .v2-pin-point { transform: scale(calc(var(--v2-dot-scale) * 1.2)); }
   .v2-map-canvas.has-selection .v2-pin:not(.is-selected):hover { --pin-veil: 0; }
   .v2-map-canvas.has-selection .v2-pin:not(.is-selected):hover .v2-pin-photo img { filter: none; }
 }

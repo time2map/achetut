@@ -43,6 +43,7 @@ function V2PlaceMarker({
   place,
   selected,
   highlighted,
+  filtered,
   dot,
   onSelect,
   onHoverChange
@@ -50,6 +51,7 @@ function V2PlaceMarker({
   place: CuratedPlace;
   selected: boolean;
   highlighted: boolean;
+  filtered: boolean;
   dot: boolean;
   onSelect: () => void;
   onHoverChange: (hovered: boolean) => void;
@@ -58,7 +60,7 @@ function V2PlaceMarker({
   return (
     <button
       type="button"
-      className={`v2-pin is-${place.category}${selected ? ' is-selected' : ''}${highlighted ? ' is-highlighted' : ''}${dot ? ' is-dot' : ''}`}
+      className={`v2-pin is-${place.category}${selected ? ' is-selected' : ''}${highlighted ? ' is-highlighted' : ''}${filtered ? ' is-filtered' : ''}${dot ? ' is-dot' : ''}`}
       aria-label={
         place.photo
           ? `${place.title}, ${category.label}. Photo by ${place.photo.author || 'unknown author'}${place.photo.license ? `, ${place.photo.license}` : ''}`
@@ -107,6 +109,7 @@ export const MapPlaceMarker = memo(function MapPlaceMarker({
   place,
   selected,
   highlighted,
+  filtered,
   dot,
   onSelect,
   onHoverChange
@@ -114,6 +117,7 @@ export const MapPlaceMarker = memo(function MapPlaceMarker({
   place: CuratedPlace;
   selected: boolean;
   highlighted: boolean;
+  filtered: boolean;
   dot: boolean;
   onSelect: (place: CuratedPlace) => void;
   onHoverChange: (placeId: string, hovered: boolean) => void;
@@ -129,11 +133,12 @@ export const MapPlaceMarker = memo(function MapPlaceMarker({
       longitude={place.coordinates[0]}
       latitude={place.coordinates[1]}
       anchor="bottom"
-      style={{ zIndex: selected ? 3 : highlighted ? 2 : dot ? 0 : 1 }}>
+      style={{ zIndex: selected ? 3 : highlighted ? 2 : filtered ? 0 : dot ? 0 : 1 }}>
       <V2PlaceMarker
         place={place}
         selected={selected}
         highlighted={highlighted}
+        filtered={filtered}
         dot={dot}
         onSelect={selectMarker}
         onHoverChange={changeMarkerHover}

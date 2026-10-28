@@ -1,9 +1,11 @@
-import { useEffect, useRef, type MutableRefObject } from 'react';
+import { useEffect, useMemo, useRef, type MutableRefObject } from 'react';
 import type { Map as MapboxMap } from 'mapbox-gl';
 import Map, { AttributionControl, NavigationControl, Popup } from 'react-map-gl/mapbox';
 import type { CuratedCity, CuratedPlace } from '../places';
 import {
   CITY_ZOOM,
+  COMPACT_MARKER_MODE,
+  DOT_PIN_STYLE,
   MAPBOX_STYLE,
   MAPBOX_TOKEN,
   PLACE_3D_BEARING,
@@ -12,6 +14,7 @@ import {
   PLACE_ZOOM,
   BUILDINGS_3D_MIN_ZOOM,
   POI_LABELS_MIN_ZOOM,
+  type CategoryFilter,
   type MapViewportBounds,
   type SheetLevel
 } from './config';
@@ -26,6 +29,12 @@ import { applyMapDesign, getMapDesign, type MapDesignId } from './mapDesigns';
 import { Buildings3DControl, HoverPreview, MapPlaceMarker } from './MapMarkers';
 
 const currentBasemap = getMapDesign('current').basemap;
+
+type MarkerCollisionBox = { left: number; right: number; top: number; bottom: number };
+
+function markerBoxesOverlap(a: MarkerCollisionBox, b: MarkerCollisionBox) {
+  return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+}
 
 function syncPoiVisibility(map: MapboxMap) {
   try {
@@ -43,6 +52,7 @@ export function MapCanvas({
   selectedPlace,
   selectedPlaceId,
   renderedMapPlaces,
+  activeCategory,
   photoPlaceIds,
   previewPlace,
   previewPlaceId,
@@ -71,6 +81,7 @@ export function MapCanvas({
   selectedPlace: CuratedPlace | null;
   selectedPlaceId: string | null;
   renderedMapPlaces: CuratedPlace[];
+  activeCategory: CategoryFilter;
   photoPlaceIds: ReadonlySet<string>;
   previewPlace: CuratedPlace | null;
   previewPlaceId: string | null;
@@ -97,6 +108,7 @@ export function MapCanvas({
 }) {
   const mapDesignIdRef = useRef(mapDesignId);
   const appliedDesignRef = useRef<MapDesignId | null>(null);
+  const loggedZoomRef = useRef<string | null>(null);
   mapDesignIdRef.current = mapDesignId;
 
   useEffect(() => {
@@ -110,9 +122,55 @@ export function MapCanvas({
     placeId !== selectedPlaceId &&
     !photoPlaceIds.has(placeId) &&
     !(highlightedPlaceId === placeId && previewPlaceId !== placeId);
+  const collisionSafeFilteredIds = useMemo(() => {
+    const map = mapRef.current;
+    if (!map || activeCategory === 'all') return null;
+
+    const occupied: MarkerCollisionBox[] = [];
+    const filteredPlaces: CuratedPlace[] = [];
+
+    for (const place of renderedMapPlaces) {
+      const selected = place.id === selectedPlaceId;
+      if (!selected && place.category !== activeCategory) {
+        filteredPlaces.push(place);
+        continue;
+      }
+
+      const { x, y } = map.project(place.coordinates);
+      const promotedToPhoto =
+        !selected &&
+        (photoPlaceIds.has(place.id) || (highlightedPlaceId === place.id && previewPlaceId !== place.id));
+      if (selected) {
+        occupied.push({ left: x - 21, right: x + 21, top: y - 21, bottom: y + 21 });
+      } else if (promotedToPhoto) {
+        occupied.push({ left: x - 27, right: x + 27, top: y - 60, bottom: y + 9 });
+      } else {
+        occupied.push({ left: x - 9, right: x + 9, top: y - 9, bottom: y + 9 });
+      }
+    }
+
+    const visibleIds = new Set<string>();
+    for (const place of filteredPlaces) {
+      const { x, y } = map.project(place.coordinates);
+      // The 12px dot gets a small breathing zone so translucent pixels never stack.
+      const box = { left: x - 8, right: x + 8, top: y - 8, bottom: y + 8 };
+      if (occupied.some((candidate) => markerBoxesOverlap(candidate, box))) continue;
+      occupied.push(box);
+      visibleIds.add(place.id);
+    }
+    return visibleIds;
+  }, [
+    activeCategory,
+    highlightedPlaceId,
+    mapRef,
+    photoPlaceIds,
+    previewPlaceId,
+    renderedMapPlaces,
+    selectedPlaceId
+  ]);
   return (
     <div
-      className={`v2-map-canvas${mapDesignId === 'white' || mapDesignId === 'classic' ? ' is-map-design-white' : ''}${isCompactPins ? ' is-compact-pins' : ''}${selectedPlaceId ? ' has-selection' : ''}`}
+      className={`v2-map-canvas${mapDesignId === 'white' || mapDesignId === 'classic' ? ' is-map-design-white' : ''}${isCompactPins ? ' is-compact-pins' : ''}${COMPACT_MARKER_MODE === 'category' ? ' marker-mode-category' : ' marker-mode-neutral'} dot-pin-${DOT_PIN_STYLE}${activeCategory !== 'all' ? ' category-filter-active' : ''}${selectedPlaceId ? ' has-selection' : ''}`}
       role="region"
       aria-label={`Map of curated places in ${activeCity.name}`}>
       {MAPBOX_TOKEN ? (
@@ -175,6 +233,10 @@ export function MapCanvas({
           }}
           onZoom={(event) => {
             updateZoomModes(event.viewState.zoom);
+            const zoom = event.viewState.zoom.toFixed(2);
+            if (loggedZoomRef.current === zoom) return;
+            loggedZoomRef.current = zoom;
+            console.log('zoom', zoom);
           }}
           onZoomEnd={(event) => {
             syncPoiVisibility(event.target);
@@ -223,12 +285,15 @@ export function MapCanvas({
           {renderedMapPlaces.map((place) => {
             const selected = selectedPlaceId === place.id;
             const highlighted = highlightedPlaceId === place.id || previewPlaceId === place.id;
+            const filtered = activeCategory !== 'all' && place.category !== activeCategory && !selected;
+            if (filtered && collisionSafeFilteredIds && !collisionSafeFilteredIds.has(place.id)) return null;
             return (
               <MapPlaceMarker
                 key={place.id}
                 place={place}
                 selected={selected}
                 highlighted={highlighted}
+                filtered={filtered}
                 dot={isDotPlace(place.id)}
                 onSelect={onSelectPlace}
                 onHoverChange={onPreviewHover}

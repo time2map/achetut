@@ -165,17 +165,6 @@ export function PlacesSidebar({
                   </>
                 )}
               </div>
-              <output
-                className="v2-place-count"
-                role="status"
-                aria-atomic="true"
-                aria-label={cityPending ? 'Loading places' : `${visiblePlaces.length} places shown`}>
-                {cityPending ? (
-                  <span className="v2-skel-line is-count" />
-                ) : (
-                  <strong aria-hidden="true">{visiblePlaces.length}</strong>
-                )}
-              </output>
             </div>
 
             {SHOW_SEARCH ? (

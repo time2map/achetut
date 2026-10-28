@@ -13,6 +13,10 @@ export const PLACE_3D_PITCH = 62;
 export const MAP_MAX_PITCH = 65;
 export const PLACE_3D_BEARING = -20;
 export const COMPACT_PIN_ZOOM = 13;
+// Compact marker palette: switch to 'category' to use a muted colour per place type.
+export const COMPACT_MARKER_MODE = 'neutral' as 'neutral' | 'category';
+// Square overview pins: 'light' = white fill + black border; 'dark' = black fill + white border.
+export const DOT_PIN_STYLE = 'dark' as 'light' | 'dark';
 // Photo pins per viewport; the rest of the places in view render as dots.
 export const MAX_PHOTO_PINS = 10;
 // From this zoom every place in view is a photo pin, overlap included.
@@ -56,12 +60,12 @@ export type IconName =
 export const SHEET_LEVELS: SheetLevel[] = ['peek', 'half', 'full'];
 
 export const FILTERS: { value: CategoryFilter; label: string }[] = [
-  { value: 'all', label: 'All' },
   { value: 'architecture', label: 'Architecture' },
   { value: 'city-core', label: 'City core' },
   { value: 'housing', label: 'Housing' },
   { value: 'parks', label: 'Parks' },
-  { value: 'unusual', label: 'Unusual' }
+  { value: 'unusual', label: 'Unusual' },
+  { value: 'all', label: 'All' }
 ];
 
 export function readPreviewLoading() {

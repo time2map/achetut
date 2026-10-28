@@ -163,7 +163,7 @@ function MapScreenContent({ cities, initialCity }: { cities: CitySummary[]; init
   const activeCityIdRef = useRef(activeCityId);
   activeCityIdRef.current = activeCityId;
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(initialRoute.placeId);
-  const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all');
+  const [activeCategory, setActiveCategory] = useState<CategoryFilter>('architecture');
   const [query, setQuery] = useState('');
   const [mapReady, setMapReady] = useState(false);
   const [mapViewportBounds, setMapViewportBounds] = useState<MapViewportBounds | null>(null);
@@ -230,18 +230,24 @@ function MapScreenContent({ cities, initialCity }: { cities: CitySummary[]; init
     () => FILTERS.filter((filter) => filter.value === 'all' || places.some((place) => place.category === filter.value)),
     [places]
   );
-  const visiblePlaces = useMemo(() => {
-    const normalizedQuery = query.trim().toLocaleLowerCase();
-    return places.filter((place) => {
-      const matchesCategory = activeCategory === 'all' || place.category === activeCategory;
-      const matchesQuery =
-        !normalizedQuery ||
-        [place.title, place.architect, place.area, place.year]
-          .filter(Boolean)
-          .some((value) => value?.toLocaleLowerCase().includes(normalizedQuery));
-      return matchesCategory && matchesQuery;
-    });
-  }, [activeCategory, places, query]);
+  const normalizedQuery = query.trim().toLocaleLowerCase();
+  const matchesQuery = useCallback(
+    (place: CuratedPlace) =>
+      !normalizedQuery ||
+      [place.title, place.architect, place.area, place.year]
+        .filter(Boolean)
+        .some((value) => value?.toLocaleLowerCase().includes(normalizedQuery)),
+    [normalizedQuery]
+  );
+  const visiblePlaces = useMemo(
+    () =>
+      places.filter(
+        (place) => (activeCategory === 'all' || place.category === activeCategory) && matchesQuery(place)
+      ),
+    [activeCategory, matchesQuery, places]
+  );
+  // Category filter fades the other map pins instead of removing them. Search still hides non-matches.
+  const mapPlaces = useMemo(() => places.filter(matchesQuery), [matchesQuery, places]);
   const selectedPlace = useMemo(
     () => places.find((place) => place.id === selectedPlaceId) ?? null,
     [places, selectedPlaceId]
@@ -249,9 +255,9 @@ function MapScreenContent({ cities, initialCity }: { cities: CitySummary[]; init
   const renderedMapPlaces = useMemo(
     () =>
       mapViewportBounds
-        ? visiblePlaces.filter((place) => place.id === selectedPlaceId || isPlaceInsideBounds(place, mapViewportBounds))
-        : visiblePlaces,
-    [mapViewportBounds, selectedPlaceId, visiblePlaces]
+        ? mapPlaces.filter((place) => place.id === selectedPlaceId || isPlaceInsideBounds(place, mapViewportBounds))
+        : mapPlaces,
+    [mapPlaces, mapViewportBounds, selectedPlaceId]
   );
   // Recomputed per settled viewport (mapViewportBounds changes on moveend), not per frame.
   const photoPlaceIds = useMemo(() => {
@@ -262,7 +268,7 @@ function MapScreenContent({ cities, initialCity }: { cities: CitySummary[]; init
   selectedPlaceRef.current = selectedPlace;
   const previewPlace =
     previewPlaceId && previewPlaceId !== selectedPlaceId
-      ? (visiblePlaces.find((place) => place.id === previewPlaceId) ?? null)
+      ? (places.find((place) => place.id === previewPlaceId) ?? null)
       : null;
 
   const clearSelection = useCallback(
@@ -310,7 +316,7 @@ function MapScreenContent({ cities, initialCity }: { cities: CitySummary[]; init
       startCityTransition(() => {
         setActiveCityId(city.id);
           setSelectedPlaceId(place?.id ?? null);
-        setActiveCategory('all');
+        setActiveCategory('architecture');
         setQuery('');
       });
         if (!mapRef.current) return;
@@ -504,6 +510,7 @@ function MapScreenContent({ cities, initialCity }: { cities: CitySummary[]; init
           selectedPlace={selectedPlace}
           selectedPlaceId={selectedPlaceId}
           renderedMapPlaces={renderedMapPlaces}
+          activeCategory={activeCategory}
           photoPlaceIds={photoPlaceIds}
           previewPlace={previewPlace}
           previewPlaceId={previewPlaceId}
