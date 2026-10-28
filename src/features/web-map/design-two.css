@@ -93,6 +93,7 @@
 .design-variant-two .mapboxgl-ctrl-group button .mapboxgl-ctrl-icon { opacity: .82; filter: invert(1); }
 .design-variant-two .mapboxgl-ctrl-attrib-button { filter: invert(1); }
 .design-variant-two .mapboxgl-ctrl-top-right .v2-3d-control { margin-top: 8px; }
+.design-variant-two .mapboxgl-ctrl-top-right .v2-orbit-control { margin-top: 8px; }
 .design-variant-two .v2-3d-control .v2-3d-toggle {
   display: grid;
   place-items: center;
@@ -106,10 +107,29 @@
 .design-variant-two .v2-3d-control .v2-3d-toggle.is-enabled:not(.is-active) { box-shadow: inset 0 0 0 1px var(--v2-ink); }
 .design-variant-two .v2-3d-control .v2-3d-toggle.is-active { color: var(--v2-surface); background: var(--v2-ink); box-shadow: none; }
 .design-variant-two .v2-3d-control .v2-3d-toggle:active { transform: scale(.96); }
+.design-variant-two .v2-orbit-control .v2-orbit-toggle {
+  width: auto;
+  min-width: 88px;
+  height: 44px;
+  padding: 0 11px;
+  color: var(--v2-ink-soft);
+  background: var(--v2-surface-raised);
+  font: 500 11px/1 var(--v2-font-mono);
+  letter-spacing: .035em;
+  white-space: nowrap;
+  transition: background-color 150ms ease, color 150ms ease, transform 150ms ease;
+}
+.design-variant-two .v2-orbit-control .v2-orbit-toggle.is-active {
+  color: var(--v2-surface);
+  background: var(--v2-ink);
+}
+.design-variant-two .v2-orbit-control .v2-orbit-toggle:active { transform: scale(.97); }
 @media (hover: hover) {
   .design-variant-two .mapboxgl-ctrl-group button:not(.v2-3d-toggle):hover { background-color: var(--v2-surface-muted); }
   .design-variant-two .v2-3d-control .v2-3d-toggle:not(.is-active):hover { color: var(--v2-ink); background: var(--v2-surface-muted); }
   .design-variant-two .v2-3d-control .v2-3d-toggle.is-active:hover { background: var(--v2-accent-hover); }
+  .design-variant-two .v2-orbit-control .v2-orbit-toggle:hover { color: var(--v2-ink); }
+  .design-variant-two .v2-orbit-control .v2-orbit-toggle.is-active:hover { color: var(--v2-surface); background: var(--v2-accent-hover); }
 }
 .design-variant-two .mapboxgl-ctrl-bottom-right {
   right: 12px;
@@ -1380,8 +1400,9 @@
  */
 .v2-pin {
   position: relative;
-  width: 44px;
-  height: 56px;
+  /* Photo pins at 1.5× the original 44×56 survey annotation. */
+  width: 66px;
+  height: 84px;
   padding: 0;
   border: 0;
   background: none;
@@ -1390,13 +1411,13 @@
 }
 .v2-pin[hidden] { display: none; }
 .v2-pin.is-selected { z-index: 3; }
-/* Topic-filtered dots use real alpha; MapCanvas culls overlaps before they reach this layer. */
+/* Topic-filtered dots stay opaque and smaller; MapCanvas culls overlaps before they reach this layer. */
 .v2-pin-body {
   position: absolute;
   top: 0;
   left: 0;
-  width: 44px;
-  height: 44px;
+  width: 66px;
+  height: 66px;
   transform-origin: 50% 100%;
   transition: transform 220ms var(--v2-ease), opacity 160ms ease;
 }
@@ -1450,14 +1471,14 @@
   transition: opacity 200ms ease, filter 200ms ease;
 }
 .v2-pin-photo.has-image img { opacity: 1; }
-.v2-pin-initial { color: rgba(255, 255, 255, .94); font-size: 16px; font-weight: 600; }
+.v2-pin-initial { color: rgba(255, 255, 255, .94); font-size: 22px; font-weight: 600; }
 .v2-pin-photo.has-image .v2-pin-initial { visibility: hidden; }
 .v2-pin-stem {
   position: absolute;
-  top: 44px;
-  left: 21.5px;
-  width: 1px;
-  height: 9px;
+  top: 66px;
+  left: 32.5px;
+  width: 1.5px;
+  height: 12px;
   background: var(--v2-ink);
   box-shadow: 0 0 4px rgba(241, 239, 233, .7);
   transition: opacity 160ms ease, box-shadow 160ms ease;
@@ -1465,9 +1486,9 @@
 .v2-pin-point {
   position: absolute;
   bottom: 0;
-  left: 19.5px;
-  width: 5px;
-  height: 5px;
+  left: 29.5px;
+  width: 7px;
+  height: 7px;
   background: var(--v2-ink);
   box-shadow: 0 0 0 1.5px var(--v2-surface-raised);
   transition: width 200ms var(--v2-ease), height 200ms var(--v2-ease), left 200ms var(--v2-ease), background-color 160ms ease, box-shadow 160ms ease;
@@ -1479,25 +1500,13 @@
 }
 .v2-pin.is-selected .v2-pin-stem { opacity: 0; }
 .v2-pin.is-selected .v2-pin-point {
-  left: 15px;
-  width: 14px;
-  height: 14px;
-  background: var(--v2-accent);
-  box-shadow: 0 0 0 2px var(--v2-surface-raised), 0 0 0 3px var(--v2-accent), 0 1px 8px rgba(22, 22, 21, .35);
+  left: 28px;
+  width: 10px;
+  height: 10px;
+  border-radius: 0;
+  background: #fff;
+  box-shadow: 0 0 0 1.5px #111;
 }
-.v2-pin.is-selected::before,
-.v2-pin.is-selected::after {
-  content: '';
-  position: absolute;
-  bottom: 7px;
-  left: 50%;
-  background: var(--v2-accent);
-  pointer-events: none;
-}
-.v2-pin.is-selected::before,
-.v2-pin.is-selected::after { box-shadow: 0 0 6px rgba(241, 239, 233, .55); }
-.v2-pin.is-selected::before { width: 38px; height: 1px; margin-left: -19px; }
-.v2-pin.is-selected::after { bottom: -12px; width: 1px; height: 38px; margin-left: -.5px; }
 
 /* Dimmed pins stay opaque (an opacity fade lets overlapping pins show through each other);
    the fade is faked with a paper veil over a greyscale photo instead. */
@@ -1565,7 +1574,7 @@
   border-radius: 0;
   background: var(--v2-dot-fill);
   box-shadow:
-    0 0 0 1.5px var(--v2-dot-stroke),
+    0 0 0 1.5px #fff,
     0 0 8px 2px rgba(255, 255, 255, .72),
     0 1px 6px rgba(0, 0, 0, .34);
   filter: none;
@@ -1582,16 +1591,19 @@
   --v2-dot-fill: color-mix(in srgb, var(--v2-dot-base-fill) 34%, var(--v2-canvas) 66%);
   --v2-dot-stroke: color-mix(in srgb, var(--v2-dot-base-stroke) 46%, var(--v2-canvas) 54%);
   box-shadow:
-    0 0 0 1.5px var(--v2-dot-stroke),
+    0 0 0 1.5px #fff,
     0 0 6px 1px rgba(255, 255, 255, .28),
     0 1px 4px rgba(0, 0, 0, .18);
 }
 .v2-pin.is-dot.is-filtered:not(.is-selected) .v2-pin-point {
-  opacity: .38;
+  top: 7px;
+  left: 7px;
+  width: 9px;
+  height: 9px;
+  opacity: 1;
   box-shadow:
-    0 0 0 1.5px var(--v2-dot-stroke),
-    0 0 7px 1px rgba(255, 255, 255, .42),
-    0 1px 4px rgba(0, 0, 0, .16);
+    0 0 0 1.5px #fff,
+    0 1px 4px rgba(0, 0, 0, .22);
 }
 .v2-map-canvas.category-filter-active .v2-pin.is-dot:not(.is-filtered):not(.is-selected) .v2-pin-point {
   top: 4px;
@@ -1599,7 +1611,7 @@
   width: 14px;
   height: 14px;
   box-shadow:
-    0 0 0 1.5px var(--v2-dot-stroke),
+    0 0 0 1.5px #fff,
     0 0 10px 3px rgba(255, 255, 255, .88),
     0 1px 7px rgba(0, 0, 0, .32);
 }
@@ -1607,7 +1619,7 @@
 .v2-map-canvas.has-selection .v2-pin.is-dot.is-highlighted .v2-pin-point {
   opacity: .82;
   box-shadow:
-    0 0 0 1.5px var(--v2-dot-stroke),
+    0 0 0 1.5px #fff,
     0 0 11px 3px rgba(255, 255, 255, .9),
     0 2px 7px rgba(0, 0, 0, .3);
   transform: scale(calc(var(--v2-dot-scale) * 1.2));

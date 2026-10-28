@@ -1,9 +1,11 @@
 import type { Map as MapboxMap } from 'mapbox-gl';
 import architecturalMapLutDataUrl from './assets/architectural-map-lut.png?inline';
+import surveyMapLutDataUrl from './assets/survey-map-lut.png?inline';
 import { MAPBOX_STYLE, POI_LABELS_MIN_ZOOM } from './config';
 import { applied3dObjects, setShow3dObjects } from './mapCamera';
 
 const architecturalMapLut = architecturalMapLutDataUrl.replace(/^data:image\/png;base64,/, '');
+const surveyMapLut = surveyMapLutDataUrl.replace(/^data:image\/png;base64,/, '');
 
 // Shared Standard-basemap flags so a preset switch doesn't bring back labels the guide hides.
 const standardChrome = {
@@ -105,7 +107,7 @@ export const MAP_DESIGNS: MapDesign[] = [
       ...standardChrome,
       lightPreset: 'dawn', // 'day', 'dusk', 'night', 'dawn'
       theme: 'custom',
-      'theme-data': architecturalMapLut,
+      'theme-data': surveyMapLut,
       colorLand: '#242424',
       colorWater: '#171717',
       colorGreenspace: '#2c2c2c',
@@ -117,7 +119,7 @@ export const MAP_DESIGNS: MapDesign[] = [
       colorTrunks: '#444444',
       colorMotorways: '#444444',
       colorHdRoads: '#444444',
-      colorBuildings: 'rgb(129, 129, 129)', //rgb(89, 88, 88)
+      colorBuildings: 'rgb(109, 109, 109)', //rgb(89, 88, 88)
       colorPlaceLabels: 'rgba(255, 255, 255, 0.58)', //rgb(255, 255, 255)
       colorRoadLabels: 'rgba(255, 255, 255, 0.43)', //rgb(255, 255, 255)
       colorPointOfInterestLabels: 'rgba(255, 255, 255, 0.7)'

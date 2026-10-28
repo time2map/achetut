@@ -12,6 +12,7 @@ export const PLACE_3D_PITCH = 62;
 // Pitch raises the horizon. The camera cannot tilt past this, including the phone gesture.
 export const MAP_MAX_PITCH = 65;
 export const PLACE_3D_BEARING = -20;
+export const PLACE_ORBIT_DURATION = 36_000;
 export const COMPACT_PIN_ZOOM = 13;
 // Compact marker palette: switch to 'category' to use a muted colour per place type.
 export const COMPACT_MARKER_MODE = 'neutral' as 'neutral' | 'category';
@@ -19,6 +20,8 @@ export const COMPACT_MARKER_MODE = 'neutral' as 'neutral' | 'category';
 export const DOT_PIN_STYLE = 'dark' as 'light' | 'dark';
 // Photo pins per viewport; the rest of the places in view render as dots.
 export const MAX_PHOTO_PINS = 10;
+// Marker photo square edge in CSS px (1.5× the original 44).
+export const PHOTO_PIN_SIZE = 66;
 // From this zoom every place in view is a photo pin, overlap included.
 export const PHOTO_PIN_ALWAYS_ZOOM = 15;
 export const PHOTO_PIN_GAP = 6;

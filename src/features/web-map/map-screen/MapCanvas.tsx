@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, type MutableRefObject } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 import type { Map as MapboxMap } from 'mapbox-gl';
 import Map, { AttributionControl, NavigationControl, Popup } from 'react-map-gl/mapbox';
 import type { CuratedCity, CuratedPlace } from '../places';
@@ -23,12 +23,13 @@ import {
   bindCompassReset,
   getBufferedMapBounds,
   getMapPadding,
-  getPlace3dZoom
+  getPlace3dZoom,
+  startPlaceCameraOrbit
 } from './mapCamera';
 import { applyMapDesign, getMapDesign, type MapDesignId } from './mapDesigns';
-import { Buildings3DControl, HoverPreview, MapPlaceMarker } from './MapMarkers';
+import { Buildings3DControl, HoverPreview, MapPlaceMarker, OrbitControl } from './MapMarkers';
 
-const currentBasemap = getMapDesign('current').basemap;
+const currentBasemap = getMapDesign('survey').basemap;
 
 type MarkerCollisionBox = { left: number; right: number; top: number; bottom: number };
 
@@ -109,7 +110,36 @@ export function MapCanvas({
   const mapDesignIdRef = useRef(mapDesignId);
   const appliedDesignRef = useRef<MapDesignId | null>(null);
   const loggedZoomRef = useRef<string | null>(null);
+  const orbitCancelRef = useRef<(() => void) | null>(null);
+  const orbitingRef = useRef(false);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [isOrbiting, setIsOrbiting] = useState(false);
   mapDesignIdRef.current = mapDesignId;
+
+  const stopOrbit = useCallback(() => {
+    orbitCancelRef.current?.();
+    orbitCancelRef.current = null;
+    if (!orbitingRef.current) return;
+    orbitingRef.current = false;
+    setIsOrbiting(false);
+    const map = mapRef.current;
+    if (map) onViewportBounds(getBufferedMapBounds(map));
+  }, [mapRef, onViewportBounds]);
+
+  const startOrbit = useCallback(() => {
+    const map = mapRef.current;
+    if (!map || !selectedPlaceId || !buildings3d) return;
+    orbitCancelRef.current?.();
+    orbitingRef.current = true;
+    setIsOrbiting(true);
+    map.stop();
+    orbitCancelRef.current = startPlaceCameraOrbit(map, () => {
+      orbitCancelRef.current = null;
+      orbitingRef.current = false;
+      setIsOrbiting(false);
+      onViewportBounds(getBufferedMapBounds(map));
+    });
+  }, [buildings3d, mapRef, onViewportBounds, selectedPlaceId]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -117,6 +147,22 @@ export function MapCanvas({
     appliedDesignRef.current = mapDesignId;
     applyMapDesign(map, mapDesignId, buildings3dRef.current);
   }, [buildings3dRef, mapDesignId, mapRef]);
+  useEffect(() => {
+    stopOrbit();
+    const map = mapRef.current;
+    if (!mapLoaded || !map || !selectedPlaceId || !buildings3d) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const startWhenSettled = () => {
+      if (!orbitingRef.current) startOrbit();
+    };
+    if (map.isMoving()) map.once('moveend', startWhenSettled);
+    else startWhenSettled();
+    return () => {
+      map.off('moveend', startWhenSettled);
+      stopOrbit();
+    };
+  }, [buildings3d, mapLoaded, mapRef, selectedPlaceId, startOrbit, stopOrbit]);
   // A list hover lifts a dot into a photo pin; a map hover keeps the dot so the target doesn't move under the cursor.
   const isDotPlace = (placeId: string) =>
     placeId !== selectedPlaceId &&
@@ -143,7 +189,7 @@ export function MapCanvas({
       if (selected) {
         occupied.push({ left: x - 21, right: x + 21, top: y - 21, bottom: y + 21 });
       } else if (promotedToPhoto) {
-        occupied.push({ left: x - 27, right: x + 27, top: y - 60, bottom: y + 9 });
+        occupied.push({ left: x - 40, right: x + 40, top: y - 90, bottom: y + 12 });
       } else {
         occupied.push({ left: x - 9, right: x + 9, top: y - 9, bottom: y + 9 });
       }
@@ -203,8 +249,9 @@ export function MapCanvas({
             }
           }}
 
-          onLoad={(event) => {
-            mapRef.current = event.target;
+            onLoad={(event) => {
+              mapRef.current = event.target;
+              setMapLoaded(true);
             bindCompassReset(event.target);
             event.target.setPadding(getMapPadding());
             const zoom = event.target.getZoom();
@@ -213,7 +260,7 @@ export function MapCanvas({
             syncPoiVisibility(event.target);
             if (appliedDesignRef.current !== mapDesignIdRef.current) {
               appliedDesignRef.current = mapDesignIdRef.current;
-              if (mapDesignIdRef.current !== 'current') {
+              if (mapDesignIdRef.current !== 'survey') {
                 applyMapDesign(event.target, mapDesignIdRef.current, buildings3dRef.current);
               }
             }
@@ -222,22 +269,33 @@ export function MapCanvas({
             onMapError(null);
           }}
           onMoveEnd={(event) => {
+            if (orbitingRef.current) return;
             onViewportBounds(getBufferedMapBounds(event.target));
           }}
           onClick={() => {
+            stopOrbit();
             if (isMobileSheet) changeSheetLevel('peek');
             onMapClick();
           }}
           onZoomStart={(event) => {
-            if ('originalEvent' in event && event.originalEvent) isUserZoomingRef.current = true;
+            if ('originalEvent' in event && event.originalEvent) {
+              stopOrbit();
+              isUserZoomingRef.current = true;
+            }
           }}
-          onZoom={(event) => {
-            updateZoomModes(event.viewState.zoom);
-            const zoom = event.viewState.zoom.toFixed(2);
-            if (loggedZoomRef.current === zoom) return;
-            loggedZoomRef.current = zoom;
-            console.log('zoom', zoom);
+          onRotateStart={(event) => {
+            if ('originalEvent' in event && event.originalEvent) stopOrbit();
           }}
+          onPitchStart={(event) => {
+            if ('originalEvent' in event && event.originalEvent) stopOrbit();
+          }}
+          // onZoom={(event) => {
+          //   updateZoomModes(event.viewState.zoom);
+          //   const zoom = event.viewState.zoom.toFixed(2);
+          //   if (loggedZoomRef.current === zoom) return;
+          //   loggedZoomRef.current = zoom;
+          //   console.log('zoom', zoom);
+          // }}
           onZoomEnd={(event) => {
             syncPoiVisibility(event.target);
             updateZoomModes(event.viewState.zoom);
@@ -263,6 +321,7 @@ export function MapCanvas({
             }
           }}
           onDragStart={() => {
+            stopOrbit();
             onDragStart();
             if (isMobileSheet && sheetLevel === 'half' && !selectedPlaceId) changeSheetLevel('peek');
           }}
@@ -281,6 +340,12 @@ export function MapCanvas({
             active={effectiveBuildings3d}
             onToggle={onToggleBuildings3d}
           />
+          {selectedPlaceId && buildings3d ? (
+            <OrbitControl
+              active={isOrbiting}
+              onToggle={isOrbiting ? stopOrbit : startOrbit}
+            />
+          ) : null}
           <AttributionControl position="bottom-right" />
           {renderedMapPlaces.map((place) => {
             const selected = selectedPlaceId === place.id;

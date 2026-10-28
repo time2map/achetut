@@ -83,8 +83,8 @@ export function MapScreen() {
           cityId = await detectInitialCityId(cities, fallbackId);
           const initialCity = cityId === fallbackId ? await fallbackRequest : await loadCity(cityId);
           if (!cancelled) setData({ cities, initialCity });
-          return;
-        }
+        return;
+      }
 
         const initialCity = await loadCity(cityId);
         if (!cancelled) setData({ cities, initialCity });
@@ -110,7 +110,7 @@ export function MapScreen() {
             onClick={() => setAttempt((value) => value + 1)}>
             Retry
       </button>
-        </div>
+    </div>
       </main>
     );
   }
@@ -122,10 +122,10 @@ export function MapScreen() {
           className="v2-loading"
           role="status">
           <span /> Loading guide…
-    </div>
+      </div>
       </main>
-    );
-  }
+  );
+}
 
   return (
     <MapScreenContent
@@ -174,7 +174,7 @@ function MapScreenContent({ cities, initialCity }: { cities: CitySummary[]; init
   );
   const [lightbox, setLightbox] = useState<{ place: CuratedPlace; index: number } | null>(null);
   const [aboutOpen, setAboutOpen] = useState(false);
-  const [mapDesignId, setMapDesignId] = useState<MapDesignId>('current');
+  const [mapDesignId, setMapDesignId] = useState<MapDesignId>('survey');
   const closeAbout = useCallback(() => setAboutOpen(false), []);
   const [isCityPending, startCityTransition] = useTransition();
   const [previewPlaceId, setPreviewPlaceId] = useState<string | null>(null);
@@ -230,12 +230,12 @@ function MapScreenContent({ cities, initialCity }: { cities: CitySummary[]; init
     () => FILTERS.filter((filter) => filter.value === 'all' || places.some((place) => place.category === filter.value)),
     [places]
   );
-  const normalizedQuery = query.trim().toLocaleLowerCase();
+    const normalizedQuery = query.trim().toLocaleLowerCase();
   const matchesQuery = useCallback(
     (place: CuratedPlace) =>
-      !normalizedQuery ||
-      [place.title, place.architect, place.area, place.year]
-        .filter(Boolean)
+        !normalizedQuery ||
+        [place.title, place.architect, place.area, place.year]
+          .filter(Boolean)
         .some((value) => value?.toLocaleLowerCase().includes(normalizedQuery)),
     [normalizedQuery]
   );

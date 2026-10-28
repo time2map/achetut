@@ -5,9 +5,9 @@ import { dirname, resolve } from 'node:path';
 const LUT_SIZE = 32;
 const WIDTH = LUT_SIZE * LUT_SIZE;
 const HEIGHT = LUT_SIZE;
-const OUTPUT_PATH = resolve(
-  'src/features/web-map/map-screen/assets/architectural-map-lut.png'
-);
+const ASSET_DIRECTORY = 'src/features/web-map/map-screen/assets';
+const ARCHITECTURAL_OUTPUT_PATH = resolve(ASSET_DIRECTORY, 'architectural-map-lut.png');
+const SURVEY_OUTPUT_PATH = resolve(ASSET_DIRECTORY, 'survey-map-lut.png');
 
 const clamp = (value) => Math.min(1, Math.max(0, value));
 
@@ -20,10 +20,10 @@ const tonalStops = [
   [1, 0.99]
 ];
 
-function interpolateTone(value) {
-  for (let index = 1; index < tonalStops.length; index += 1) {
-    const [rightInput, rightOutput] = tonalStops[index];
-    const [leftInput, leftOutput] = tonalStops[index - 1];
+function interpolateTone(value, stops = tonalStops) {
+  for (let index = 1; index < stops.length; index += 1) {
+    const [rightInput, rightOutput] = stops[index];
+    const [leftInput, leftOutput] = stops[index - 1];
     if (value > rightInput) continue;
 
     const progress = (value - leftInput) / (rightInput - leftInput);
@@ -31,7 +31,7 @@ function interpolateTone(value) {
     return leftOutput + (rightOutput - leftOutput) * easedProgress;
   }
 
-  return tonalStops.at(-1)[1];
+  return stops.at(-1)[1];
 }
 //* зеленый акцент
 const smoothstep = (min, max, value) => {
@@ -68,6 +68,39 @@ function grade(red, green, blue) {
   ];
 }
 
+const surveyTonalStops = [
+  [0, 0.035],
+  [0.1, 0.095],
+  [0.25, 0.21],
+  [0.5, 0.56],
+  [0.75, 0.87],
+  [1, 0.99]
+];
+
+function gradeSurvey(red, green, blue) {
+  const luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+  const chroma = Math.max(red, green, blue) - Math.min(red, green, blue);
+  const texturedMaterialMask = smoothstep(0.025, 0.16, chroma);
+  const shadowMask = 1 - smoothstep(0.08, 0.42, luminance);
+  const warmMask = smoothstep(0.02, 0.16, red - Math.max(green, blue));
+
+  // Lift only the lower tonal range. Textured materials get a little more room,
+  // while highlights remain unchanged and retain the dawn lighting direction.
+  const tone = clamp(
+    interpolateTone(luminance, surveyTonalStops) +
+      shadowMask * (0.01 + 0.018 * texturedMaterialMask)
+  );
+  const retainedColor = 0.018 + 0.16 * texturedMaterialMask;
+
+  // Suppress the red component of warm dawn light more strongly than other
+  // colour detail, keeping masonry neutral without fully desaturating models.
+  return [
+    clamp(tone + (red - luminance) * retainedColor * (1 - 0.62 * warmMask)),
+    clamp(tone + (green - luminance) * retainedColor),
+    clamp(tone + (blue - luminance) * retainedColor)
+  ];
+}
+
 // function grade(red, green, blue) {
 //   const luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
 //   const tone = interpolateTone(luminance);
@@ -92,29 +125,6 @@ function grade(red, green, blue) {
 //   ];
 // }
 
-const scanlines = Buffer.alloc((WIDTH * 4 + 1) * HEIGHT);
-
-for (let greenIndex = 0; greenIndex < LUT_SIZE; greenIndex += 1) {
-  const rowOffset = greenIndex * (WIDTH * 4 + 1);
-  scanlines[rowOffset] = 0;
-
-  for (let blueIndex = 0; blueIndex < LUT_SIZE; blueIndex += 1) {
-    for (let redIndex = 0; redIndex < LUT_SIZE; redIndex += 1) {
-      const red = redIndex / (LUT_SIZE - 1);
-      const green = greenIndex / (LUT_SIZE - 1);
-      const blue = blueIndex / (LUT_SIZE - 1);
-      const graded = grade(red, green, blue);
-      const x = blueIndex * LUT_SIZE + redIndex;
-      const pixelOffset = rowOffset + 1 + x * 4;
-
-      scanlines[pixelOffset] = Math.round(graded[0] * 255);
-      scanlines[pixelOffset + 1] = Math.round(graded[1] * 255);
-      scanlines[pixelOffset + 2] = Math.round(graded[2] * 255);
-      scanlines[pixelOffset + 3] = 255;
-    }
-  }
-}
-
 function crc32(buffer) {
   let crc = 0xffffffff;
   for (const byte of buffer) {
@@ -135,19 +145,47 @@ function pngChunk(type, data) {
   return Buffer.concat([length, typeBuffer, data, checksum]);
 }
 
-const header = Buffer.alloc(13);
-header.writeUInt32BE(WIDTH, 0);
-header.writeUInt32BE(HEIGHT, 4);
-header[8] = 8;
-header[9] = 6;
+function generateLut(outputPath, gradePixel) {
+  const scanlines = Buffer.alloc((WIDTH * 4 + 1) * HEIGHT);
 
-const png = Buffer.concat([
-  Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
-  pngChunk('IHDR', header),
-  pngChunk('IDAT', deflateSync(scanlines, { level: 9 })),
-  pngChunk('IEND', Buffer.alloc(0))
-]);
+  for (let greenIndex = 0; greenIndex < LUT_SIZE; greenIndex += 1) {
+    const rowOffset = greenIndex * (WIDTH * 4 + 1);
+    scanlines[rowOffset] = 0;
 
-mkdirSync(dirname(OUTPUT_PATH), { recursive: true });
-writeFileSync(OUTPUT_PATH, png);
-console.log(`Generated ${OUTPUT_PATH} (${WIDTH}x${HEIGHT}, ${png.length} bytes)`);
+    for (let blueIndex = 0; blueIndex < LUT_SIZE; blueIndex += 1) {
+      for (let redIndex = 0; redIndex < LUT_SIZE; redIndex += 1) {
+        const red = redIndex / (LUT_SIZE - 1);
+        const green = greenIndex / (LUT_SIZE - 1);
+        const blue = blueIndex / (LUT_SIZE - 1);
+        const graded = gradePixel(red, green, blue);
+        const x = blueIndex * LUT_SIZE + redIndex;
+        const pixelOffset = rowOffset + 1 + x * 4;
+
+        scanlines[pixelOffset] = Math.round(graded[0] * 255);
+        scanlines[pixelOffset + 1] = Math.round(graded[1] * 255);
+        scanlines[pixelOffset + 2] = Math.round(graded[2] * 255);
+        scanlines[pixelOffset + 3] = 255;
+      }
+    }
+  }
+
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(WIDTH, 0);
+  header.writeUInt32BE(HEIGHT, 4);
+  header[8] = 8;
+  header[9] = 6;
+
+  const png = Buffer.concat([
+    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+    pngChunk('IHDR', header),
+    pngChunk('IDAT', deflateSync(scanlines, { level: 9 })),
+    pngChunk('IEND', Buffer.alloc(0))
+  ]);
+
+  mkdirSync(dirname(outputPath), { recursive: true });
+  writeFileSync(outputPath, png);
+  console.log(`Generated ${outputPath} (${WIDTH}x${HEIGHT}, ${png.length} bytes)`);
+}
+
+generateLut(ARCHITECTURAL_OUTPUT_PATH, grade);
+generateLut(SURVEY_OUTPUT_PATH, gradeSurvey);

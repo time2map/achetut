@@ -39,6 +39,27 @@ export function Buildings3DControl({
   );
 }
 
+export function OrbitControl({ active, onToggle }: { active: boolean; onToggle: () => void }) {
+  const [container] = useState(() => {
+    const element = document.createElement('div');
+    element.className = 'mapboxgl-ctrl mapboxgl-ctrl-group v2-orbit-control';
+    return element;
+  });
+  useControl(() => ({ onAdd: () => container, onRemove: () => container.remove() }), { position: 'top-right' });
+  return createPortal(
+    <button
+      type="button"
+      className={`v2-orbit-toggle${active ? ' is-active' : ''}`}
+      onClick={onToggle}
+      aria-pressed={active}
+      aria-label={active ? 'Stop camera orbit' : 'Start camera orbit'}
+      title={active ? 'Stop orbit' : 'Start orbit'}>
+      {active ? 'Stop orbit' : 'Start orbit'}
+    </button>,
+    container
+  );
+}
+
 function V2PlaceMarker({
   place,
   selected,

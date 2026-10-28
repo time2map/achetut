@@ -7,10 +7,12 @@ import {
   PHOTO_PIN_ALWAYS_ZOOM,
   MOBILE_QUERY_WIDTH,
   PHOTO_PIN_GAP,
+  PHOTO_PIN_SIZE,
   PLACE_3D_BEARING,
   PLACE_3D_PITCH,
   PLACE_3D_ZOOM,
   PLACE_3D_ZOOM_MOBILE,
+  PLACE_ORBIT_DURATION,
   PLACE_ZOOM,
   type MapViewportBounds,
   type SheetHeights,
@@ -102,7 +104,7 @@ export function pickPhotoPlaceIds(map: MapboxMap, places: CuratedPlace[], skipId
   const ids = new Set<string>();
   if (!visible) return ids;
   const alwaysPhoto = map.getZoom() >= PHOTO_PIN_ALWAYS_ZOOM;
-  const size = (map.getZoom() < COMPACT_PIN_ZOOM ? 44 * 0.8 : 44) + PHOTO_PIN_GAP;
+  const size = (map.getZoom() < COMPACT_PIN_ZOOM ? PHOTO_PIN_SIZE * 0.8 : PHOTO_PIN_SIZE) + PHOTO_PIN_GAP;
   const taken: { x: number; y: number }[] = [];
   for (const place of places) {
     if (!alwaysPhoto && ids.size >= MAX_PHOTO_PINS) break;
@@ -184,6 +186,35 @@ export function focusPlaceCamera(map: MapboxMap, place: CuratedPlace, buildings3
     curve: 1.2,
     essential: true
   });
+}
+
+// Mapbox's documented camera-orbit pattern updates only the native map camera per frame.
+// React state changes only when the orbit starts or ends.
+export function startPlaceCameraOrbit(map: MapboxMap, onComplete: () => void) {
+  const startBearing = map.getBearing();
+  let frameId = 0;
+  let startTime: number | null = null;
+  let cancelled = false;
+
+  const frame = (time: number) => {
+    if (cancelled) return;
+    startTime ??= time;
+    const progress = Math.min(1, (time - startTime) / PLACE_ORBIT_DURATION);
+    // Start moving immediately, then ease gently into the final bearing.
+    const easedProgress = 1 - Math.pow(1 - progress, 1.35);
+    map.rotateTo(startBearing + 360 * easedProgress, { duration: 0 });
+    if (progress < 1) {
+      frameId = window.requestAnimationFrame(frame);
+      return;
+    }
+    onComplete();
+  };
+
+  frameId = window.requestAnimationFrame(frame);
+  return () => {
+    cancelled = true;
+    window.cancelAnimationFrame(frameId);
+  };
 }
 
 export function focusCityCamera(map: MapboxMap, center: [number, number], duration = 650) {
