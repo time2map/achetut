@@ -340,6 +340,8 @@ export function MapCanvas({
           <AttributionControl position="bottom-right" />
           {renderedMapPlaces.map((place) => {
             const selected = selectedPlaceId === place.id;
+            // During the 360 orbit only the selected square stays on the map.
+            if (isOrbiting && !selected) return null;
             const highlighted = highlightedPlaceId === place.id || previewPlaceId === place.id;
             const filtered = activeCategory !== 'all' && place.category !== activeCategory && !selected;
             if (filtered && collisionSafeFilteredIds && !collisionSafeFilteredIds.has(place.id)) return null;
@@ -356,7 +358,7 @@ export function MapCanvas({
               />
             );
           })}
-          {previewPlace ? (
+          {previewPlace && !isOrbiting ? (
             <Popup
               key={previewPlace.id}
               className="v2-map-popup v2-hover-popup"
