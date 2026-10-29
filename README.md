@@ -67,12 +67,12 @@ Production: <https://archi2go.time2map.com>, API: <https://archi2api.time2map.co
 
 `.github/workflows/deploy.yml` builds the image and runs `docker compose up -d` on a self-hosted
 GitHub runner installed on the server itself (labels `self-hosted,archi2go-web`), so no registry is
-involved. It runs on every push to `web-version` and by hand via Actions → Deploy web → Run workflow.
+involved. It runs on every push to `main` and by hand via Actions → Deploy web → Run workflow.
 
 One-time setup:
 
 ```bash
-gh secret set VITE_MAPBOX_ACCESS_TOKEN -R time2map/achetut   # the map does not render without it
+gh secret set VITE_MAPBOX_ACCESS_TOKEN -R time2map/archi2go-web   # the map does not render without it
 ```
 
 ### Server setup (once, on 72.56.100.61)
@@ -88,8 +88,8 @@ VER=2.338.0
 curl -sSL -o runner.tar.gz \
   "https://github.com/actions/runner/releases/download/v${VER}/actions-runner-linux-x64-${VER}.tar.gz"
 tar xzf runner.tar.gz && rm runner.tar.gz && chown -R ghrunner:ghrunner /opt/actions-runner
-# token: gh api -X POST repos/time2map/achetut/actions/runners/registration-token --jq .token
-sudo -u ghrunner ./config.sh --url https://github.com/time2map/achetut \
+# token: gh api -X POST repos/time2map/archi2go-web/actions/runners/registration-token --jq .token
+sudo -u ghrunner ./config.sh --url https://github.com/time2map/archi2go-web \
   --token <registration-token> --name ams-1-archi2go --labels archi2go-web --unattended
 ./svc.sh install ghrunner && ./svc.sh start
 ```

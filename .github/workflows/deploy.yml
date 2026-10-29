@@ -1,11 +1,11 @@
 name: Deploy web
 
-# Боевой сайт archi2go.time2map.com. Ветка web-version — боевая; main занята документацией.
+# Боевой сайт archi2go.time2map.com. Боевая ветка — main.
 # Деплой идёт на self-hosted раннере, установленном на том же сервере (72.56.100.61), что и
 # бэкенд: образ собирается и поднимается docker compose локально, реестр не нужен.
 on:
   push:
-    branches: [web-version]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -39,7 +39,7 @@ jobs:
       - name: Проверить входные данные сборки
         run: |
           if [ -z "${VITE_MAPBOX_ACCESS_TOKEN}" ]; then
-            echo "::error::Секрет VITE_MAPBOX_ACCESS_TOKEN не задан. Добавить: gh secret set VITE_MAPBOX_ACCESS_TOKEN -R time2map/achetut"
+            echo "::error::Секрет VITE_MAPBOX_ACCESS_TOKEN не задан. Добавить: gh secret set VITE_MAPBOX_ACCESS_TOKEN -R time2map/archi2go-web"
             exit 1
           fi
 
