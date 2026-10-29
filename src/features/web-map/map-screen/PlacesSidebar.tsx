@@ -118,8 +118,7 @@ export function PlacesSidebar({
         <>
           <header className="v2-sidebar-header">
             <div className="v2-brand">
-              {/* Deploy check from main: logo hidden for one deploy, revert next. */}
-              {/* <Archi2goLogo /> */}
+              <Archi2goLogo />
               <span className="v2-edition">City guide</span>
             </div>
 
