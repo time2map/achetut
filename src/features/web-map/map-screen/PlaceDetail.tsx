@@ -38,7 +38,8 @@ export function PlaceDetail({
   onBack,
   onOpenPhoto,
   onOpenMenu,
-  onOpenAbout
+  onOpenAbout,
+  onOpenContact
 }: {
   place: CuratedPlace;
   city: CuratedCity;
@@ -46,6 +47,7 @@ export function PlaceDetail({
   onOpenPhoto: (index: number) => void;
   onOpenMenu: () => void;
   onOpenAbout: () => void;
+  onOpenContact: () => void;
 }) {
   const backRef = useRef<HTMLButtonElement | null>(null);
   const thumbsRef = useRef<HTMLDivElement | null>(null);
@@ -127,6 +129,7 @@ export function PlaceDetail({
           <AppMenu
             onOpen={onOpenMenu}
             onAbout={onOpenAbout}
+            onContact={onOpenContact}
           />
         </div>
       </div>

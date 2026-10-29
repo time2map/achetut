@@ -52,7 +52,8 @@
 
 .design-variant-two button,
 .design-variant-two input,
-.design-variant-two select { color: inherit; font: inherit; }
+.design-variant-two select,
+.design-variant-two textarea { color: inherit; font: inherit; }
 
 .design-variant-two button,
 .design-variant-two a,
@@ -61,7 +62,8 @@
 .design-variant-two button:focus-visible,
 .design-variant-two a:focus-visible,
 .design-variant-two input:focus-visible,
-.design-variant-two select:focus-visible {
+.design-variant-two select:focus-visible,
+.design-variant-two textarea:focus-visible {
   outline: 2px solid var(--v2-focus);
   outline-offset: 2px;
 }
@@ -513,6 +515,113 @@
   text-transform: uppercase;
 }
 
+.v2-contact-card { width: min(500px, 100%); padding-bottom: 32px; }
+.v2-contact-card .v2-about-eyebrow { margin-top: 0; }
+.v2-contact-form {
+  display: grid;
+  margin-top: 26px;
+}
+.v2-contact-form label {
+  margin-bottom: 7px;
+  color: var(--v2-ink-soft);
+  font: 500 11px/1.3 var(--v2-font-mono);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.v2-contact-form input,
+.v2-contact-form textarea {
+  width: 100%;
+  border: 1px solid var(--v2-line-strong);
+  border-radius: var(--v2-radius-sm);
+  color: var(--v2-ink);
+  background: var(--v2-canvas);
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+.v2-contact-form input { min-height: 44px; padding: 0 12px; }
+.v2-contact-form textarea {
+  min-height: 136px;
+  padding: 11px 12px;
+  line-height: 1.5;
+  resize: vertical;
+}
+.v2-contact-form input:focus,
+.v2-contact-form textarea:focus {
+  border-color: var(--v2-muted);
+  box-shadow: 0 0 0 1px var(--v2-muted);
+}
+.v2-contact-form [aria-invalid="true"] { border-color: #bb8179; }
+.v2-contact-error {
+  min-height: 24px;
+  padding-top: 5px;
+  color: #dca39b;
+  font: 400 11px/1.35 var(--v2-font-mono);
+}
+.v2-contact-form .v2-contact-consent {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  margin: 5px 0 0;
+  color: var(--v2-muted);
+  font: 400 11px/1.45 var(--v2-font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+}
+.v2-contact-form .v2-contact-consent input {
+  width: 18px;
+  min-height: 18px;
+  height: 18px;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--v2-ink);
+}
+.v2-contact-consent a { color: var(--v2-ink-soft); text-underline-offset: 2px; }
+.v2-contact-form .v2-contact-honeypot {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.design-variant-two .v2-contact-submit {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  justify-self: start;
+  margin-top: 8px;
+  padding: 0 17px;
+  border: 0;
+  border-radius: var(--v2-radius-sm);
+  color: var(--v2-canvas);
+  background: var(--v2-ink);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.design-variant-two .v2-contact-submit:disabled {
+  color: var(--v2-canvas);
+  opacity: .58;
+  cursor: wait;
+}
+.v2-contact-submit .v2-icon { width: 16px; height: 16px; }
+.v2-contact-status {
+  min-height: 34px;
+  padding-top: 10px;
+  color: var(--v2-muted);
+  font: 400 11px/1.45 var(--v2-font-mono);
+}
+.v2-contact-status.is-success { color: #a9c5a2; }
+.v2-contact-status.is-error { color: #dca39b; }
+.v2-contact-status a { color: inherit; text-underline-offset: 3px; }
+
 @media (hover: hover) {
   .v2-app-menu-trigger:hover { border-color: var(--v2-ink); color: var(--v2-ink); }
   .v2-app-menu-list > [role="menuitem"]:not(:disabled):hover { background: var(--v2-surface-muted); }
@@ -520,6 +629,7 @@
   .v2-about-actions a:not(.v2-about-primary):hover,
   .v2-about-footer .v2-time2map:hover { color: var(--v2-ink); }
   .v2-about-actions .v2-about-primary:not(:disabled):hover { background: var(--v2-accent-hover); }
+  .design-variant-two .v2-contact-submit:not(:disabled):hover { color: var(--v2-canvas); background: var(--v2-accent-hover); }
 }
 
 @media (hover: hover) {
@@ -2155,6 +2265,7 @@ button.v2-popup-media:hover img { transform: scale(1.03); }
   .v2-offline { left: 14px; }
   .v2-about { place-items: end stretch; padding: 12px 8px calc(env(safe-area-inset-bottom) + 8px); }
   .v2-about-card { width: 100%; padding: 28px 22px 0; }
+  .v2-contact-card { padding-bottom: 24px; }
   .v2-about-footer { margin: 24px -22px 0; padding: 0 22px; }
   .v2-state-card { top: 14px; right: 14px; max-width: none; }
   .v2-loading { top: 14px; }

@@ -48,6 +48,7 @@ export function PlacesSidebar({
   onSetQuery,
   onOpenPhoto,
   onOpenAbout,
+  onOpenContact,
   onSetHighlightedPlaceId
 }: {
   cities: CitySummary[];
@@ -75,6 +76,7 @@ export function PlacesSidebar({
   onSetQuery: (query: string) => void;
   onOpenPhoto: (index: number) => void;
   onOpenAbout: () => void;
+  onOpenContact: () => void;
   onSetHighlightedPlaceId: (updater: string | null | ((current: string | null) => string | null)) => void;
 }) {
   return (
@@ -113,6 +115,7 @@ export function PlacesSidebar({
             if (isMobileSheet && sheetLevel === 'peek') sheet.changeSheetLevel('half');
           }}
           onOpenAbout={onOpenAbout}
+          onOpenContact={onOpenContact}
         />
       ) : (
         <>
@@ -139,6 +142,7 @@ export function PlacesSidebar({
                 if (isMobileSheet && sheetLevel === 'peek') sheet.changeSheetLevel('half');
               }}
               onAbout={onOpenAbout}
+              onContact={onOpenContact}
             />
 
             {SHOW_SEARCH ? (

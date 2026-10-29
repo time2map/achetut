@@ -45,7 +45,7 @@ import {
   setPaddingKeepingView,
   setShow3dObjects
 } from './map-screen/mapCamera';
-import { AboutDialog } from './map-screen/AppMenu';
+import { AboutDialog, ContactDialog } from './map-screen/AppMenu';
 import { PhotoLightbox } from './map-screen/PhotoLightbox';
 import { PlacesSidebar } from './map-screen/PlacesSidebar';
 import { cityPath, parseRoute, placePath, requestedCityId } from './map-screen/routes';
@@ -173,7 +173,17 @@ function MapScreenContent({ cities, initialCity }: { cities: CitySummary[]; init
   );
   const [lightbox, setLightbox] = useState<{ place: CuratedPlace; index: number } | null>(null);
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [contactOpen, setContactOpen] = useState(
+    () => new URLSearchParams(window.location.search).get('contact') === '1'
+  );
   const closeAbout = useCallback(() => setAboutOpen(false), []);
+  const closeContact = useCallback(() => {
+    setContactOpen(false);
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has('contact')) return;
+    url.searchParams.delete('contact');
+    window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+  }, []);
   const [isCityPending, startCityTransition] = useTransition();
   const [previewPlaceId, setPreviewPlaceId] = useState<string | null>(null);
   const [highlightedPlaceId, setHighlightedPlaceId] = useState<string | null>(null);
@@ -470,13 +480,13 @@ function MapScreenContent({ cities, initialCity }: { cities: CitySummary[]; init
   }, [asideRef, isMobileSheetRef, selectedPlaceId, sheetHeightsRef, sheetLevelRef]);
 
   useEffect(() => {
-    if (!selectedPlaceId || lightbox || aboutOpen) return;
+    if (!selectedPlaceId || lightbox || aboutOpen || contactOpen) return;
     const backOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && !event.defaultPrevented) clearSelection();
     };
     window.addEventListener('keydown', backOnEscape);
     return () => window.removeEventListener('keydown', backOnEscape);
-  }, [aboutOpen, clearSelection, lightbox, selectedPlaceId]);
+  }, [aboutOpen, clearSelection, contactOpen, lightbox, selectedPlaceId]);
 
   const resetSelectionRoute = () => {
     setSelectedPlaceId(null);
@@ -564,6 +574,7 @@ function MapScreenContent({ cities, initialCity }: { cities: CitySummary[]; init
           onSetQuery={setQuery}
           onOpenPhoto={(index) => detailPlace && setLightbox({ place: detailPlace, index })}
           onOpenAbout={() => setAboutOpen(true)}
+          onOpenContact={() => setContactOpen(true)}
           onSetHighlightedPlaceId={setHighlightedPlaceId}
         />
 
@@ -619,7 +630,16 @@ function MapScreenContent({ cities, initialCity }: { cities: CitySummary[]; init
             onClose={closeLightbox}
           />
         ) : null}
-        {aboutOpen ? <AboutDialog onClose={closeAbout} /> : null}
+        {aboutOpen ? (
+          <AboutDialog
+            onClose={closeAbout}
+            onContact={() => {
+              setAboutOpen(false);
+              setContactOpen(true);
+            }}
+          />
+        ) : null}
+        {contactOpen ? <ContactDialog onClose={closeContact} /> : null}
       </main>
     </PreviewLoadingContext.Provider>
   );

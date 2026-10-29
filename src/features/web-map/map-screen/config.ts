@@ -3,6 +3,8 @@ import type { PlaceCategory } from '../places';
 
 export const MAPBOX_TOKEN = env.mapboxAccessToken;
 export const MAPBOX_STYLE = env.mapboxStyle;
+export const CONTACT_FORM_ENDPOINT = env.contactFormEndpoint;
+export const CONTACT_EMAIL = 'contact@time2map.com';
 
 export const CITY_ZOOM = 12.35;
 export const PLACE_ZOOM = 13.9;

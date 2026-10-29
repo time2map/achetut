@@ -6,16 +6,21 @@ import { Time2mapMark } from '../web-map/Time2mapMark';
 import './privacy-policy.css';
 
 export function PrivacyPolicyPage() {
+  const requestedReturnPath = new URLSearchParams(window.location.search).get('return');
+  const returnPath =
+    requestedReturnPath?.startsWith('/') && !requestedReturnPath.startsWith('//') ? requestedReturnPath : '/';
+  const returnsToContact = new URL(returnPath, window.location.origin).searchParams.get('contact') === '1';
+
   return (
     <main className="privacy-page" id="main-content">
       <header className="privacy-header">
         <div className="privacy-header-inner">
-          <a className="privacy-brand" href="/" aria-label="Back to Archi2go">
+          <a className="privacy-brand" href={returnPath} aria-label={returnsToContact ? 'Back to contact form' : 'Back to Archi2go'}>
             <Archi2goLogo />
           </a>
-          <a className="privacy-back" href="/">
+          <a className="privacy-back" href={returnPath}>
             <span aria-hidden="true">←</span>
-            Back to the map
+            {returnsToContact ? 'Back to contact form' : 'Back to the map'}
           </a>
         </div>
       </header>
@@ -90,7 +95,7 @@ export function PrivacyPolicyPage() {
           <section id="contact">
             <div className="privacy-section-title"><span aria-hidden="true">06</span><h2>Contact</h2></div>
             <p>
-              For privacy questions or requests, email <a href="mailto:feedback@time2map.com">feedback@time2map.com</a>.
+              For privacy questions or requests, email <a href="mailto:contact@time2map.com">contact@time2map.com</a>.
             </p>
           </section>
 
