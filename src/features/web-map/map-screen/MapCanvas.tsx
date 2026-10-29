@@ -26,10 +26,10 @@ import {
   getPlace3dZoom,
   startPlaceCameraOrbit
 } from './mapCamera';
-import { applyMapDesign, ensureCustomRoadLabels, getMapDesign, type MapDesignId } from './mapDesigns';
+import { ensureCustomRoadLabels, SURVEY_MAP_DESIGN } from './mapDesigns';
 import { Buildings3DControl, HoverPreview, MapPlaceMarker, OrbitControl } from './MapMarkers';
 
-const currentBasemap = getMapDesign('survey').basemap;
+const currentBasemap = SURVEY_MAP_DESIGN.basemap;
 
 type MarkerCollisionBox = { left: number; right: number; top: number; bottom: number };
 
@@ -75,8 +75,7 @@ export function MapCanvas({
   onToggleBuildings3d,
   onMapClick,
   onDragStart,
-  changeSheetLevel,
-  mapDesignId
+  changeSheetLevel
 }: {
   activeCity: CuratedCity;
   selectedPlace: CuratedPlace | null;
@@ -105,16 +104,12 @@ export function MapCanvas({
   onMapClick: () => void;
   onDragStart: () => void;
   changeSheetLevel: (level: SheetLevel) => void;
-  mapDesignId: MapDesignId;
 }) {
-  const mapDesignIdRef = useRef(mapDesignId);
-  const appliedDesignRef = useRef<MapDesignId | null>(null);
   const loggedZoomRef = useRef<string | null>(null);
   const orbitCancelRef = useRef<(() => void) | null>(null);
   const orbitingRef = useRef(false);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [isOrbiting, setIsOrbiting] = useState(false);
-  mapDesignIdRef.current = mapDesignId;
 
   const stopOrbit = useCallback(() => {
     orbitCancelRef.current?.();
@@ -141,12 +136,6 @@ export function MapCanvas({
     });
   }, [buildings3d, mapRef, onViewportBounds, selectedPlaceId]);
 
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || appliedDesignRef.current === null || appliedDesignRef.current === mapDesignId) return;
-    appliedDesignRef.current = mapDesignId;
-    applyMapDesign(map, mapDesignId, buildings3dRef.current);
-  }, [buildings3dRef, mapDesignId, mapRef]);
   useEffect(() => {
     stopOrbit();
     const map = mapRef.current;
@@ -207,7 +196,7 @@ export function MapCanvas({
   }, [activeCategory, highlightedPlaceId, mapRef, photoPlaceIds, previewPlaceId, renderedMapPlaces, selectedPlaceId]);
   return (
     <div
-      className={`v2-map-canvas${mapDesignId === 'white' || mapDesignId === 'classic' ? ' is-map-design-white' : ''}${isCompactPins ? ' is-compact-pins' : ''}${COMPACT_MARKER_MODE === 'category' ? ' marker-mode-category' : ' marker-mode-neutral'} dot-pin-${DOT_PIN_STYLE}${activeCategory !== 'all' ? ' category-filter-active' : ''}${selectedPlaceId ? ' has-selection' : ''}`}
+      className={`v2-map-canvas${isCompactPins ? ' is-compact-pins' : ''}${COMPACT_MARKER_MODE === 'category' ? ' marker-mode-category' : ' marker-mode-neutral'} dot-pin-${DOT_PIN_STYLE}${activeCategory !== 'all' ? ' category-filter-active' : ''}${selectedPlaceId ? ' has-selection' : ''}`}
       role="region"
       aria-label={`Map of curated places in ${activeCity.name}`}>
       {MAPBOX_TOKEN ? (
@@ -248,13 +237,7 @@ export function MapCanvas({
             updateZoomModes(zoom);
             applied3dObjects.set(event.target, buildings3dRef.current);
             syncPoiVisibility(event.target);
-            ensureCustomRoadLabels(event.target, mapDesignIdRef.current);
-            if (appliedDesignRef.current !== mapDesignIdRef.current) {
-              appliedDesignRef.current = mapDesignIdRef.current;
-              if (mapDesignIdRef.current !== 'survey') {
-                applyMapDesign(event.target, mapDesignIdRef.current, buildings3dRef.current);
-              }
-            }
+            ensureCustomRoadLabels(event.target);
             onViewportBounds(getBufferedMapBounds(event.target));
             onMapReady();
             onMapError(null);

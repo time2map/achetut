@@ -45,8 +45,7 @@ import {
   setPaddingKeepingView,
   setShow3dObjects
 } from './map-screen/mapCamera';
-import { AboutDialog, MapDesignMenu } from './map-screen/AppMenu';
-import type { MapDesignId } from './map-screen/mapDesigns';
+import { AboutDialog } from './map-screen/AppMenu';
 import { PhotoLightbox } from './map-screen/PhotoLightbox';
 import { PlacesSidebar } from './map-screen/PlacesSidebar';
 import { cityPath, parseRoute, placePath, requestedCityId } from './map-screen/routes';
@@ -174,7 +173,6 @@ function MapScreenContent({ cities, initialCity }: { cities: CitySummary[]; init
   );
   const [lightbox, setLightbox] = useState<{ place: CuratedPlace; index: number } | null>(null);
   const [aboutOpen, setAboutOpen] = useState(false);
-  const [mapDesignId, setMapDesignId] = useState<MapDesignId>('survey');
   const closeAbout = useCallback(() => setAboutOpen(false), []);
   const [isCityPending, startCityTransition] = useTransition();
   const [previewPlaceId, setPreviewPlaceId] = useState<string | null>(null);
@@ -538,7 +536,6 @@ function MapScreenContent({ cities, initialCity }: { cities: CitySummary[]; init
               }}
           onDragStart={() => setPreviewPlaceId(null)}
           changeSheetLevel={changeSheetLevel}
-          mapDesignId={mapDesignId}
         />
 
         <PlacesSidebar
@@ -568,11 +565,6 @@ function MapScreenContent({ cities, initialCity }: { cities: CitySummary[]; init
           onOpenPhoto={(index) => detailPlace && setLightbox({ place: detailPlace, index })}
           onOpenAbout={() => setAboutOpen(true)}
           onSetHighlightedPlaceId={setHighlightedPlaceId}
-        />
-
-        <MapDesignMenu
-          value={mapDesignId}
-          onChange={setMapDesignId}
         />
 
         {!MAPBOX_TOKEN && (

@@ -408,69 +408,6 @@
   .v2-app-menu-version { display: block; }
 }
 
-.v2-map-design {
-  position: absolute;
-  z-index: 16;
-  top: 20px;
-  right: 20px;
-}
-.v2-feedback {
-  min-height: 38px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 10px 0 14px;
-  border: 1px solid var(--v2-line-strong);
-  border-radius: var(--v2-radius-sm);
-  color: var(--v2-ink-soft);
-  background: var(--v2-surface-raised);
-  box-shadow: var(--v2-shadow-float);
-  font-size: 13px;
-  font-weight: 500;
-  text-decoration: none;
-  cursor: pointer;
-  transition: border-color 150ms ease, color 150ms ease, opacity 160ms ease;
-}
-.v2-feedback .v2-icon { width: 16px; height: 16px; }
-.v2-map-design.is-open .v2-feedback { border-color: var(--v2-ink); color: var(--v2-ink); }
-.v2-map-design.is-open .v2-feedback .v2-icon { transform: rotate(180deg); }
-.v2-map-design-list {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  width: 188px;
-  max-height: min(420px, calc(100dvh - 80px));
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-  padding: 4px 0;
-  overflow-y: auto;
-  border: 1px solid var(--v2-line-strong);
-  border-radius: var(--v2-radius-md);
-  background: var(--v2-surface-raised);
-  box-shadow: var(--v2-shadow-float);
-  animation: v2-menu-in 160ms var(--v2-ease);
-  transform-origin: top right;
-}
-.v2-map-design-list > [role="menuitemradio"] {
-  min-height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 0 12px 0 14px;
-  border: 0;
-  color: var(--v2-ink);
-  background: none;
-  font-size: 14px;
-  font-weight: 500;
-  text-align: left;
-  cursor: pointer;
-}
-.v2-map-design-list > [role="menuitemradio"] + [role="menuitemradio"] { box-shadow: inset 0 1px 0 var(--v2-line); }
-.v2-map-design-list > [role="menuitemradio"][aria-checked="true"] { color: var(--v2-ink); }
-.v2-map-design-list .v2-icon { width: 15px; height: 15px; color: var(--v2-ink); }
-
 .v2-about {
   position: fixed;
   z-index: 90;
@@ -577,10 +514,8 @@
 }
 
 @media (hover: hover) {
-  .v2-app-menu-trigger:hover,
-  .v2-feedback:hover { border-color: var(--v2-ink); color: var(--v2-ink); }
-  .v2-app-menu-list > [role="menuitem"]:not(:disabled):hover,
-  .v2-map-design-list > [role="menuitemradio"]:hover { background: var(--v2-surface-muted); }
+  .v2-app-menu-trigger:hover { border-color: var(--v2-ink); color: var(--v2-ink); }
+  .v2-app-menu-list > [role="menuitem"]:not(:disabled):hover { background: var(--v2-surface-muted); }
   .v2-about-close:hover,
   .v2-about-actions a:not(.v2-about-primary):hover,
   .v2-about-footer .v2-time2map:hover { color: var(--v2-ink); }
@@ -1630,19 +1565,6 @@
   --v2-dot-scale: .84;
 }
 
-/* White basemap: empty photo markers need a dark material against pale geometry. */
-.v2-map-canvas.is-map-design-white .v2-pin .v2-pin-frame:not(:has(.v2-pin-photo.has-image)) {
-  background: #202020;
-  box-shadow:
-    0 0 0 1.5px rgba(255, 255, 255, .96),
-    0 0 0 3.5px rgba(24, 24, 24, .82),
-    0 5px 16px rgba(0, 0, 0, .42),
-    0 0 22px 4px rgba(0, 0, 0, .16);
-}
-.v2-map-canvas.is-map-design-white .v2-pin .v2-pin-photo:not(.has-image) {
-  background: #202020;
-}
-
 /* Optional category palette: restrained colours preserve the map's monochrome hierarchy. */
 .v2-map-canvas.marker-mode-category .v2-pin.is-dot.is-architecture .v2-pin-point {
   --v2-dot-base-fill: #5d858d;
@@ -2231,17 +2153,6 @@ button.v2-popup-media:hover img { transform: scale(1.03); }
   .v2-state-card,
   .v2-loading,
   .v2-offline { left: 14px; }
-  .v2-map-design {
-    top: calc(env(safe-area-inset-top) + 12px);
-    right: 10px;
-  }
-  .v2-feedback {
-    min-height: 40px;
-    background: color-mix(in srgb, var(--v2-surface) 88%, transparent);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-  }
-  [data-sheet="full"] .v2-map-design { opacity: 0; pointer-events: none; }
   .v2-about { place-items: end stretch; padding: 12px 8px calc(env(safe-area-inset-bottom) + 8px); }
   .v2-about-card { width: 100%; padding: 28px 22px 0; }
   .v2-about-footer { margin: 24px -22px 0; padding: 0 22px; }
