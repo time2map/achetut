@@ -1,7 +1,8 @@
 name: Deploy web (archi2go.com)
 
-# Боевой сайт archi2go.com на сервере 93.93.117.44 (архивный стенд на 72.56.100.61 выкатывает
-# отдельный workflow deploy.yml). Раннер — self-hosted на том же сервере, метка archi2go-archi2go-web.
+# archi2go.com: образ (nginx + Vite-сборка) собирается на GitHub-hosted раннере, пушится в ghcr.io,
+# на сервер 93.93.117.44 только забирается. Адрес API зашивается в бандл на сборке.
+# Архивный стенд на 72.56.100.61 выкатывает отдельный workflow deploy.yml.
 on:
   push:
     branches: [main]
@@ -9,30 +10,75 @@ on:
 
 permissions:
   contents: read
+  packages: write
 
 concurrency:
-  # Общая очередь на все три проекта: сборки идут на одном docker (2 vCPU) и параллельные
-  # build/prune валят экспорт слоёв. Пуш в любой репозиторий ждёт текущий деплой.
-  group: deploy-archi2go-com
+  group: deploy-archi2go-web
   cancel-in-progress: false
 
+env:
+  IMAGE: ghcr.io/${{ github.repository }}
+  VITE_ARCHI2GO_BACK_URL: https://api.archi2go.com
+  VITE_MAPBOX_STYLE: mapbox://styles/mapbox/standard
+
 jobs:
-  deploy:
-    name: archi2go.com на 93.93.117.44
-    runs-on: [self-hosted, archi2go-archi2go-web]
+  build:
+    name: Собрать и запушить образ
+    runs-on: ubuntu-latest
     timeout-minutes: 30
-    environment:
-      name: production
-      url: https://archi2go.com
-    env:
-      # Токен зашивается в бандл на сборке. Не задан — сайт работает, карта показывает заглушку.
-      VITE_MAPBOX_ACCESS_TOKEN: ${{ secrets.VITE_MAPBOX_ACCESS_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Собрать и выкатить
-        run: SRC_WEB="$GITHUB_WORKSPACE" /srv/archi2go/deploy.sh web
+      - uses: docker/setup-buildx-action@v3
 
-      - name: Показать хвост лога деплоя
-        if: always()
-        run: tail -n 40 /var/log/archi2go-deploy.log
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ github.sha }}
+            ${{ env.IMAGE }}:latest
+          build-args: |
+            VITE_ARCHI2GO_BACK_URL=${{ env.VITE_ARCHI2GO_BACK_URL }}
+            VITE_MAPBOX_STYLE=${{ env.VITE_MAPBOX_STYLE }}
+            VITE_MAPBOX_ACCESS_TOKEN=${{ secrets.VITE_MAPBOX_ACCESS_TOKEN }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Выкатить на 93.93.117.44
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: production
+      url: https://archi2go.com
+    steps:
+      # Ключ ограничен forced command'ом: им можно вызвать только деплой web.
+      - name: SSH-деплой
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          install -m 600 /dev/null "$RUNNER_TEMP/deploy_key"
+          printf '%s\n' "$SSH_KEY" > "$RUNNER_TEMP/deploy_key"
+          ssh -i "$RUNNER_TEMP/deploy_key" \
+              -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile="$RUNNER_TEMP/known_hosts" \
+              root@93.93.117.44 "$IMAGE_TAG" <<< "$GHCR_TOKEN"
+
+      - name: Проверить сайт снаружи
+        run: |
+          set -euo pipefail
+          for u in https://archi2go.com/ https://archi2go.com/design-1/paris; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "$u")
+            echo "$u → $code"
+            [ "$code" = 200 ]
+          done
