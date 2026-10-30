@@ -1,0 +1,36 @@
+name: Deploy web (archi2go.com)
+
+# Боевой сайт archi2go.com на сервере 93.93.117.44 (архивный стенд на 72.56.100.61 выкатывает
+# отдельный workflow deploy.yml). Раннер — self-hosted на том же сервере, метка archi2go-archi2go-web.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-archi2go-com-web
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: archi2go.com на 93.93.117.44
+    runs-on: [self-hosted, archi2go-archi2go-web]
+    timeout-minutes: 30
+    environment:
+      name: production
+      url: https://archi2go.com
+    env:
+      # Токен зашивается в бандл на сборке. Не задан — сайт работает, карта показывает заглушку.
+      VITE_MAPBOX_ACCESS_TOKEN: ${{ secrets.VITE_MAPBOX_ACCESS_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Собрать и выкатить
+        run: SRC_WEB="$GITHUB_WORKSPACE" /srv/archi2go/deploy.sh web
+
+      - name: Показать хвост лога деплоя
+        if: always()
+        run: tail -n 40 /var/log/archi2go-deploy.log
