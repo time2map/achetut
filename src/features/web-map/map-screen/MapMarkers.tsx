@@ -2,6 +2,7 @@ import { memo, useCallback, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Marker, useControl } from 'react-map-gl/mapbox';
 import { CATEGORY_META, placeByline, type CuratedPlace } from '../places';
+import orbitBuildingIcon from './assets/orbit-building.svg';
 import { PhotoCredit, V2Image } from './ui';
 
 export function Buildings3DControl({
@@ -54,7 +55,12 @@ export function OrbitControl({ active, onToggle }: { active: boolean; onToggle: 
       aria-pressed={active}
       aria-label={active ? 'Stop camera orbit' : 'Start camera orbit'}
       title={active ? 'Stop orbit' : 'Start orbit'}>
-      {active ? 'Stop orbit' : 'Start orbit'}
+      <img
+        className="v2-orbit-icon"
+        src={orbitBuildingIcon}
+        alt=""
+        aria-hidden="true"
+      />
     </button>,
     container
   );

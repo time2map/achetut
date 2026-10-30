@@ -110,20 +110,31 @@
 .design-variant-two .v2-3d-control .v2-3d-toggle.is-active { color: var(--v2-surface); background: var(--v2-ink); box-shadow: none; }
 .design-variant-two .v2-3d-control .v2-3d-toggle:active { transform: scale(.96); }
 .design-variant-two .v2-orbit-control .v2-orbit-toggle {
-  width: auto;
-  min-width: 88px;
-  height: 44px;
-  padding: 0 11px;
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  padding: 6px;
   color: var(--v2-ink-soft);
   background: var(--v2-surface-raised);
-  font: 500 11px/1 var(--v2-font-mono);
-  letter-spacing: .035em;
-  white-space: nowrap;
   transition: background-color 150ms ease, color 150ms ease, transform 150ms ease;
+}
+.v2-orbit-icon {
+  display: block;
+  width: 28px;
+  height: 28px;
+  opacity: .9;
+  filter: invert(1);
+  pointer-events: none;
 }
 .design-variant-two .v2-orbit-control .v2-orbit-toggle.is-active {
   color: var(--v2-surface);
   background: var(--v2-ink);
+}
+.design-variant-two .v2-orbit-control .v2-orbit-toggle.is-active .v2-orbit-icon {
+  opacity: 1;
+  filter: none;
 }
 .design-variant-two .v2-orbit-control .v2-orbit-toggle:active { transform: scale(.97); }
 @media (hover: hover) {
