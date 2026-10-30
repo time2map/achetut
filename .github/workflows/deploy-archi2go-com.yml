@@ -11,7 +11,9 @@ permissions:
   contents: read
 
 concurrency:
-  group: deploy-archi2go-com-web
+  # Общая очередь на все три проекта: сборки идут на одном docker (2 vCPU) и параллельные
+  # build/prune валят экспорт слоёв. Пуш в любой репозиторий ждёт текущий деплой.
+  group: deploy-archi2go-com
   cancel-in-progress: false
 
 jobs:
