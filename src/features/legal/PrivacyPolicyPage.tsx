@@ -149,7 +149,7 @@ export function PrivacyPolicyPage() {
               <li>No accounts, no sign-up, no advertising. We do not sell your data, build profiles or make automated decisions about you.</li>
               <li>Our server sees your IP address and which city you open. Server logs are deleted after 14 days.</li>
               <li>The map comes from Mapbox; place photos come from Wikimedia Commons and Flickr. Your device connects to them directly, so they see your IP address.</li>
-              <li>Location is optional. Your coordinates stay on your device and are never sent to our server.</li>
+              <li>Location is optional. Your coordinates are never sent to our server.</li>
               <li>In the app, Mapbox collects usage and location data (telemetry) to improve its maps unless you switch it off with the ⓘ button on the map.</li>
               <li>All connections use encrypted HTTPS.</li>
             </ul>
@@ -181,7 +181,7 @@ export function PrivacyPolicyPage() {
 
             <PolicySubsection id="website-photos" title="Photos (Wikimedia Commons and Flickr)">
               <p>
-                Place photos load directly from Wikimedia Commons, run by the Wikimedia Foundation (USA), and a few from Flickr, run by SmugMug, Inc. (USA). They load automatically when you open a city or a place.
+                Place photos load directly from Wikimedia Commons, run by the Wikimedia Foundation (USA), and a few from Flickr, run by SmugMug, Inc. (USA). They load automatically when you open a city, a place or the list of cities.
               </p>
               <p>
                 These services receive your IP address, browser information and which photos were loaded, which reveals the city you are viewing. They process this data as independent controllers under their own policies: <ExternalLink href="https://foundation.wikimedia.org/wiki/Policy:Privacy_policy">Wikimedia Foundation privacy policy</ExternalLink>, <ExternalLink href="https://www.flickr.com/help/privacy">Flickr privacy policy</ExternalLink>.
@@ -190,7 +190,7 @@ export function PrivacyPolicyPage() {
 
             <PolicySubsection id="website-location" title="Your location">
               <p>
-                If you allow it in your browser, the site reads your approximate location once, when you first open it, to open the nearest city. The comparison happens in your browser. Your coordinates are not sent to our server or to Mapbox, and the site does not show your position on the map.
+                If you allow it in your browser, the site asks your browser for a low-accuracy position each time you open archi2go.com without a city in the address, to open the nearest city. The comparison happens in your browser. Your coordinates are not sent to our server or to Mapbox, and the site does not show your position on the map.
               </p>
               <p>
                 Legal basis: your consent, given in your browser's permission prompt. You can withdraw it at any time in your browser's site settings. Without location, the site opens a default city and you can choose another.
@@ -205,7 +205,9 @@ export function PrivacyPolicyPage() {
                 rows={[
                   [<code>archi2go-city-v2</code>, 'Archi2go', 'Local storage, necessary', 'Remembers the last city you opened', 'Until you clear site data'],
                   [<code>archi2go-3d-v2</code>, 'Archi2go', 'Local storage, necessary', 'Remembers whether 3D view is on', 'Until you clear site data'],
-                  [<code>mapbox.eventData…</code>, 'Mapbox', 'Local storage, necessary for the map', 'Random identifier for counting map loads', 'Until you clear site data']
+                  [<code>mapbox.eventData…</code>, 'Mapbox', 'Local storage, necessary for the map', 'Random identifier for counting map loads', 'Until you clear site data'],
+                  [<code>mapbox-tiles</code>, 'Mapbox', 'Browser cache, necessary for the map', 'Copies of map tiles, so the map loads faster', 'Until the tiles expire or you clear site data'],
+                  [<code>archi2go-contact-draft</code>, 'Archi2go', 'Session storage, necessary', 'Keeps what you type in the contact form until you send it', 'Until you send the message or close the tab']
                 ]}
               />
               <p>
@@ -216,12 +218,12 @@ export function PrivacyPolicyPage() {
 
           <PolicySection id="app">
             <p>
-              This section covers the Archi2go app. The app has no accounts, no advertising, no analytics or crash reporting of our own and no push notifications. The privacy labels in the App Store and the Data safety section on Google Play list precise and approximate location, identifiers, product interaction and diagnostics: all of it is collected by Mapbox, as described below, is not linked to your identity and is not used for advertising.
+              This section covers the Archi2go app. The app has no accounts, no advertising, no analytics or crash reporting of our own and no push notifications. The privacy labels in the App Store and the Data safety section on Google Play list precise and approximate location, identifiers, product interaction and diagnostics: all of it is collected by Mapbox, as described below, is not linked to your identity and is not used for advertising. They also list your email address and your message, which the app sends only if you write to us with Contact us (see Emails to us).
             </p>
 
             <PolicySubsection id="app-server" title="Our server">
               <p>
-                The app downloads the city catalogue from our server. Each request carries your IP address, the time, the city requested and technical request headers (on iPhone, the app and iOS version). It contains no account, device identifier or coordinates. On first launch, if you allowed location, the city requested may be the one nearest to you.
+                The app downloads the city catalogue from our server. Each request carries your IP address, the time, the city requested and technical request headers (on iPhone, the app and iOS version). It contains no account, device identifier or coordinates. Each time the app starts, unless you opened it from a link, the city requested may be the one nearest to you, if you allowed location.
               </p>
               <p>
                 We use this to deliver the catalogue, keep the service running and protect it from abuse. Legal basis: our legitimate interests (Art. 6(1)(f) GDPR). Logs are deleted after 14 days.
@@ -248,7 +250,7 @@ export function PrivacyPolicyPage() {
                 No advertising identifiers are collected. Mapbox uses this data, in de-identified form, to improve its maps, produce traffic data and train AI models. Mapbox separates identifiers from location within 24 hours and keeps IP addresses for up to 30 days.
               </p>
               <p>
-                Mapbox decides how telemetry data is used and is responsible for it as an independent controller under its own privacy policy. We include the Mapbox SDK under Mapbox's terms, which require telemetry with an opt-out for every user. Our legal basis for including it is our legitimate interest in offering the map (Art. 6(1)(f) GDPR). Mapbox receives your precise location only after you allow location access for Archi2go, and the system prompt for that names Mapbox.
+                Mapbox decides how telemetry data is used and is responsible for it as an independent controller under its own privacy policy. We include the Mapbox SDK under Mapbox's terms, which require telemetry with an opt-out for every user. Our legal basis for including it is our legitimate interest in offering the map (Art. 6(1)(f) GDPR). Mapbox receives your precise location only after you allow location access for Archi2go, and the app names Mapbox when it asks for that permission.
               </p>
               <p>
                 To switch it off, tap ⓘ on the map, then Mapbox Telemetry. After that, your location is no longer sent. On iPhone the device identifier may still be sent when the map loads, so switching telemetry off does not stop all data going to Mapbox.
@@ -260,16 +262,16 @@ export function PrivacyPolicyPage() {
 
             <PolicySubsection id="app-photos" title="Photos (Wikimedia Commons and Flickr)">
               <p>
-                Place photos load directly from Wikimedia Commons (Wikimedia Foundation, USA) and a few from Flickr (SmugMug, Inc., USA), automatically when you open a city or a place. These services receive your IP address, the app's name and version and which photos were loaded, which reveals the city you are viewing. One Flickr photo is in Barcelona, the default city, so Flickr receives a request on almost every new installation.
+                Place photos load directly from Wikimedia Commons (Wikimedia Foundation, USA) and a few from Flickr (SmugMug, Inc., USA), automatically when you open a city, a place or the list of cities. These services receive your IP address, the app's name and version and which photos were loaded, which reveals the city you are viewing. One Flickr photo is in Barcelona, the default city, so Flickr receives a request on almost every new installation.
               </p>
               <p>
-                On iPhone, the app may store Wikimedia's cookies and send them back to Wikimedia: a unique identifier kept for one year and your approximate location derived from your IP address. Both services process this data as independent controllers under their own policies: <ExternalLink href="https://foundation.wikimedia.org/wiki/Policy:Privacy_policy">Wikimedia Foundation privacy policy</ExternalLink>, <ExternalLink href="https://www.flickr.com/help/privacy">Flickr privacy policy</ExternalLink>. Photos cannot be shown without these requests.
+                The app neither stores nor sends back their cookies. Both services process this data as independent controllers under their own policies: <ExternalLink href="https://foundation.wikimedia.org/wiki/Policy:Privacy_policy">Wikimedia Foundation privacy policy</ExternalLink>, <ExternalLink href="https://www.flickr.com/help/privacy">Flickr privacy policy</ExternalLink>. Photos cannot be shown without these requests.
               </p>
             </PolicySubsection>
 
             <PolicySubsection id="app-location" title="Your location">
               <p>
-                Location access is optional. The app works without it, and you can choose a city by hand. The app uses location only while it is open, never in the background, to choose the nearest city on first launch and to show you on the map.
+                Location access is optional. The app works without it, and you can choose a city by hand. The app uses location only while it is open, never in the background, to choose the nearest city each time it starts (unless you open it from a link), to show you on the map and to centre the map on you when you ask.
               </p>
               <p>When the app asks for permission, it tells you that Mapbox may also receive your location and how to turn that off.</p>
               <p>
@@ -282,7 +284,7 @@ export function PrivacyPolicyPage() {
 
             <PolicySubsection id="app-storage" title="Data stored on your phone">
               <p>
-                The app stores copies of the cities you have opened (for offline use), the last city, the 3D setting, the Mapbox telemetry setting, cached photos and map tiles and, on iPhone, Wikimedia's cookies. This data stays on your phone; on Android it is excluded from device backups. Uninstalling the app deletes all of it.
+                The app stores the list of cities, copies of the cities you have opened (for offline use), the last city, the 3D setting, the Mapbox telemetry setting, and cached photos and map tiles. This data stays on your phone; on Android it is excluded from device backups. Uninstalling the app deletes all of it.
               </p>
             </PolicySubsection>
           </PolicySection>
@@ -295,6 +297,7 @@ export function PrivacyPolicyPage() {
               rows={[
                 ['IONOS Cloud S.L.U.', 'Hosting our server and our email', 'Processor', 'Spain; servers in the EU', 'Not needed'],
                 ['Mapbox, Inc.', 'Map and telemetry', 'Processor and, for telemetry, independent controller', 'USA', 'EU-US Data Privacy Framework'],
+                ['Wikimedia Foundation, Inc.', 'Place photos', 'Independent controller', 'USA', 'Your device connects directly; see its policy'],
                 ['SmugMug, Inc. (Flickr)', 'Place photos', 'Independent controller', 'USA', 'Your device connects directly; see its policy'],
                 ['Google LLC (Android app only)', 'Location services on your phone', 'Independent controller', 'USA', 'EU-US Data Privacy Framework']
               ]}
@@ -309,7 +312,7 @@ export function PrivacyPolicyPage() {
 
           <PolicySection id="emails">
             <p>
-              If you write to us, we receive your email address and your message. We use them only to reply. Legal basis: our legitimate interests in answering you; for privacy requests, our legal obligation to handle them (Art. 6(1)(c) GDPR). Our email is hosted by IONOS in the EU.
+              If you write to us, by email or with the Contact us form on the website or in the app, we receive your email address and your message. The form sends them to our server at time2map.com, which passes them on to our mailbox as an email and does not store them. We use them only to reply. Legal basis: our legitimate interests in answering you; for privacy requests, our legal obligation to handle them (Art. 6(1)(c) GDPR). Our email is hosted by IONOS in the EU.
             </p>
           </PolicySection>
 
@@ -319,7 +322,7 @@ export function PrivacyPolicyPage() {
               columns={['Data', 'Kept for']}
               rows={[
                 ['Our server logs', '14 days'],
-                ['Emails you send us', '12 months after our last exchange'],
+                ['Emails and contact form messages you send us', '12 months after our last exchange'],
                 ['Records of privacy requests', '3 years, to show we handled them'],
                 ['Data on your device', 'Until you clear site data or uninstall the app'],
                 ['Data held by Mapbox', 'IP addresses up to 30 days; identifiers separated from location within 24 hours'],
@@ -373,7 +376,7 @@ export function PrivacyPolicyPage() {
 
           <PolicySection id="external-links">
             <p>
-              Archi2go links to place sources, architects' and publishers' websites, photo pages and Google Maps. They open in your browser only when you tap them, and their own privacy policies apply. Opening a place in Google Maps sends Google the coordinates of the place, not your location.
+              Archi2go links to place sources, architects' and publishers' websites, photo pages and licences, Wikimedia Commons search, time2map.com and Google Maps. They open in your browser only when you tap them, and their own privacy policies apply. Opening a place in Google Maps sends Google the place's coordinates, or its name and city, not your location.
             </p>
           </PolicySection>
 
