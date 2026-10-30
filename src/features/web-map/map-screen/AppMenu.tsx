@@ -7,7 +7,7 @@ import {
 } from 'react';
 import { Archi2goLogo } from '../Archi2goLogo';
 import { Time2mapMark } from '../Time2mapMark';
-import { APP_VERSION_LABEL, CONTACT_EMAIL, CONTACT_FORM_ENDPOINT, TIME2MAP_URL } from './config';
+import { CONTACT_EMAIL, CONTACT_FORM_ENDPOINT, TIME2MAP_URL } from './config';
 import { Icon } from './ui';
 
 const CONTACT_DRAFT_STORAGE_KEY = 'archi2go-contact-draft';
@@ -139,7 +139,6 @@ export function AppMenu({
             time2map.com
             <Icon name="external" />
           </a>
-          <p className="v2-app-menu-version">{APP_VERSION_LABEL}</p>
         </div>
       ) : null}
     </div>

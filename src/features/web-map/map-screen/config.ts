@@ -42,7 +42,6 @@ export const SHOW_SEARCH = false;
 export const USE_BACKEND = true;
 export const CITY_STORAGE_KEY = 'archi2go-city-v2';
 export const TIME2MAP_URL = 'https://time2map.com/';
-export const APP_VERSION_LABEL = [`v${__APP_VERSION__}`];
 
 export type CategoryFilter = 'all' | PlaceCategory;
 export type MapViewportBounds = { west: number; south: number; east: number; north: number };
