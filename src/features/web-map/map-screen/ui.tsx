@@ -133,6 +133,9 @@ export function V2Image({
       <img
         ref={imageRef}
         className={`v2-fade-img${status === 'ready' ? ' is-ready' : ''}${className ? ` ${className}` : ''}`}
+        // Photo hosts (Wikimedia, Flickr) allow CORS. An anonymous request sends no cookie,
+        // and the browser keeps none of the cookies those hosts set in reply.
+        crossOrigin="anonymous"
         src={src}
         alt={alt}
         loading={loading}

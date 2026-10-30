@@ -113,6 +113,7 @@ function V2PlaceMarker({
                 <span className="v2-pin-initial">{place.title.charAt(0)}</span>
                 {place.photo ? (
                   <img
+                    crossOrigin="anonymous"
                     src={place.photo.marker}
                     alt=""
                     loading="lazy"

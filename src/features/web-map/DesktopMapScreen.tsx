@@ -646,6 +646,7 @@ export function DesktopMapScreen({ routeBase: routeBaseProp = '' }: DesktopMapSc
             logoPosition="bottom-right"
             antialias={false}
             failIfMajorPerformanceCaveat={false}
+            performanceMetricsCollection={false}
             maxPitch={70}
             reuseMaps
             config={{

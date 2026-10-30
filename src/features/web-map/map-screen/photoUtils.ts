@@ -11,17 +11,25 @@ export function uniqueSources(sources: PlaceSource[]) {
   });
 }
 
-// Commons only renders a fixed set of thumbnail widths; 1920 is one of them.
+// A Wikimedia thumb ends in `/<width>px-<name>`, sometimes after a page prefix such as `lossy-page1-`.
+const WIKIMEDIA_THUMB = /(\/thumb\/.+\/(?:[a-z]+-)?(?:page\d+-)?)\d+px-([^/?#]+)$/;
+
+// The same thumb at another width, on the host the API gave. Originals and Flickr photos have none.
+function resizeThumb(url: string, width: number) {
+  return WIKIMEDIA_THUMB.test(url) ? url.replace(WIKIMEDIA_THUMB, `$1${width}px-$2`) : null;
+}
+
+// Wikimedia only renders a fixed set of thumbnail widths; 1920 is one of them.
+// A narrower original comes back scaled up. If the host refuses, the lightbox falls back to `src`.
 export function largePhotoUrl(photo: PlacePhoto) {
-  const file = photo.page.split('/wiki/File:')[1];
-  return file ? `https://commons.wikimedia.org/wiki/Special:FilePath/${file}?width=${LIGHTBOX_WIDTH}` : null;
+  return resizeThumb(photo.src || photo.thumb, LIGHTBOX_WIDTH);
 }
 
 // List thumbs are about 128px. A large file scaled into that box looks noisy.
 // 250px is the next smaller width Wikimedia actually serves.
 export function listPhotoUrl(photo: PlacePhoto) {
   const source = photo.src || photo.thumb;
-  return source.replace(/\/\d+px-([^/?#]+)$/, '/250px-$1');
+  return resizeThumb(source, 250) ?? source;
 }
 
 export function googleMapsUrl(place: CuratedPlace) {

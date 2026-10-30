@@ -97,6 +97,8 @@ export function CitySelect({
       const image = new Image();
       image.onload = finish;
       image.onerror = finish;
+      // Same request as V2Image's, so the cover is cached once and fetched without cookies.
+      image.crossOrigin = 'anonymous';
       image.src = url;
       if (image.complete && image.naturalWidth > 0) {
         image.onload = null;

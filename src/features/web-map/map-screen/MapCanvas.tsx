@@ -221,6 +221,8 @@ export function MapCanvas({
           logoPosition="bottom-right"
           antialias={false}
           failIfMajorPerformanceCaveat={false}
+          // Mapbox GL JS sends performance metrics to Mapbox unless told not to.
+          performanceMetricsCollection={false}
           reuseMaps
           config={{
             basemap: {

@@ -22,8 +22,12 @@ export function PhotoLightbox({
   const photos = place.photos;
   const [index, setIndex] = useState(() => Math.min(initialIndex, photos.length - 1));
   const [loaded, setLoaded] = useState<Record<string, boolean>>({});
+  // Large URLs the photo host refused; those photos show the API's `src` instead.
+  const [refused, setRefused] = useState<Record<string, boolean>>({});
   const photo = photos[index] as PlacePhoto;
-  const src = largePhotoUrl(photo) ?? photo.src ?? photo.thumb;
+  const large = largePhotoUrl(photo);
+  const fallback = photo.src || photo.thumb;
+  const src = large && !refused[large] ? large : fallback;
   const hasMany = photos.length > 1;
 
   const step = useCallback(
@@ -36,7 +40,10 @@ export function PhotoLightbox({
   useEffect(() => {
     [photos[index + 1], photos[index - 1]].forEach((neighbour) => {
       if (!neighbour) return;
-      new Image().src = largePhotoUrl(neighbour) ?? neighbour.src ?? neighbour.thumb;
+      const image = new Image();
+      // Same request as the <img> below: cached once, no cookies.
+      image.crossOrigin = 'anonymous';
+      image.src = largePhotoUrl(neighbour) ?? (neighbour.src || neighbour.thumb);
     });
   }, [index, photos]);
 
@@ -119,10 +126,14 @@ export function PhotoLightbox({
           }}>
           <img
             key={src}
+            crossOrigin="anonymous"
             src={src}
             alt={`${place.title} in ${city.name}, photo ${index + 1} of ${photos.length}`}
             decoding="async"
             onLoad={() => setLoaded((current) => ({ ...current, [src]: true }))}
+            onError={() => {
+              if (large && src === large) setRefused((current) => ({ ...current, [large]: true }));
+            }}
             onClick={(event) => event.stopPropagation()}
           />
           {hasMany ? (
