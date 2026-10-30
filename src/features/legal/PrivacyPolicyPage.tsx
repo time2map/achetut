@@ -88,8 +88,14 @@ export function PrivacyPolicyPage() {
 
   // The page renders after the browser has looked for the #fragment, so links such as /privacy#app land here.
   useEffect(() => {
-    const id = decodeURIComponent(window.location.hash.slice(1));
-    if (!id) return;
+    const hash = window.location.hash.slice(1);
+    if (!hash) return;
+    let id = hash;
+    try {
+      id = decodeURIComponent(hash);
+    } catch {
+      // A malformed fragment such as #100% stays as typed instead of blanking the page.
+    }
     void document.fonts.ready.then(() => document.getElementById(id)?.scrollIntoView({ behavior: 'instant' }));
   }, []);
 
@@ -312,7 +318,7 @@ export function PrivacyPolicyPage() {
 
           <PolicySection id="emails">
             <p>
-              If you write to us, by email or with the Contact us form on the website or in the app, we receive your email address and your message. The form sends them to our server at time2map.com, which passes them on to our mailbox as an email and does not store them. We use them only to reply. Legal basis: our legitimate interests in answering you; for privacy requests, our legal obligation to handle them (Art. 6(1)(c) GDPR). Our email is hosted by IONOS in the EU.
+              If you write to us, by email or with the Contact us form on the website or in the app, we receive your email address and your message. The form sends them to the time2map.com server, which passes them on to our mailbox as an email and does not store them. We use them only to reply. Legal basis: our legitimate interests in answering you; for privacy requests, our legal obligation to handle them (Art. 6(1)(c) GDPR). Our email is hosted by IONOS in the EU.
             </p>
           </PolicySection>
 
