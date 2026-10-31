@@ -7,7 +7,7 @@ import { Time2mapMark } from '../web-map/Time2mapMark';
 import './privacy-policy.css';
 
 // Change this, and only this, when publication slips or the policy changes.
-const EFFECTIVE_DATE = '30 October 2026';
+const EFFECTIVE_DATE = '31 October 2026';
 
 // The app and the store listings link to these ids: keep them stable.
 const SECTIONS = [
@@ -314,6 +314,7 @@ export function PrivacyPolicyPage() {
                 ['Wikimedia Foundation, Inc.', 'Place photos', 'Independent controller', 'USA', 'Your device connects directly; see its policy'],
                 ['SmugMug, Inc. (Flickr)', 'Place photos', 'Independent controller', 'USA', 'Your device connects directly; see its policy'],
                 ['Unsplash Inc.', 'Place photos', 'Independent controller', 'Canada', 'Your device connects directly; see its policy'],
+                ['IONOS Inc.', 'Hosting the time2map.com server that passes contact form messages to our email', 'Processor', 'USA', 'Standard contractual clauses'],
                 ['Google LLC (Android app only)', 'Location services on your phone', 'Independent controller', 'USA', 'EU-US Data Privacy Framework']
               ]}
             />
@@ -327,7 +328,7 @@ export function PrivacyPolicyPage() {
 
           <PolicySection id="emails">
             <p>
-              If you write to us, by email or with the Contact us form on the website or in the app, we receive your email address and your message. The form sends them to the time2map.com server, which passes them on to our mailbox as an email and does not store them. We use them only to reply. Legal basis: our legitimate interests in answering you; for privacy requests, our legal obligation to handle them (Art. 6(1)(c) GDPR). Our email is hosted by IONOS in the EU.
+              If you write to us, by email or with the Contact us form on the website or in the app, we receive your email address and your message. The form sends them to the time2map.com server, hosted by IONOS Inc. in the USA, which passes them on to our mailbox as an email and does not store them. We use them only to reply. Legal basis: our legitimate interests in answering you; for privacy requests, our legal obligation to handle them (Art. 6(1)(c) GDPR). Our email is hosted by IONOS in the EU.
             </p>
           </PolicySection>
 
