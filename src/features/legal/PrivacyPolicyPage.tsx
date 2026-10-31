@@ -154,7 +154,7 @@ export function PrivacyPolicyPage() {
             <ul>
               <li>No accounts, no sign-up, no advertising. We do not sell your data, build profiles or make automated decisions about you.</li>
               <li>Our server sees your IP address and which city you open. Server logs are deleted after 14 days.</li>
-              <li>The map comes from Mapbox; place photos come from Wikimedia Commons and Flickr. Your device connects to them directly, so they see your IP address.</li>
+              <li>The map comes from Mapbox; place photos come from Wikimedia Commons, Flickr and Unsplash. Your device connects to them directly, so they see your IP address.</li>
               <li>Location is optional. Your coordinates are never sent to our server.</li>
               <li>In the app, Mapbox collects usage and location data (telemetry) to improve its maps unless you switch it off with the ⓘ button on the map.</li>
               <li>All connections use encrypted HTTPS.</li>
@@ -185,12 +185,12 @@ export function PrivacyPolicyPage() {
               </p>
             </PolicySubsection>
 
-            <PolicySubsection id="website-photos" title="Photos (Wikimedia Commons and Flickr)">
+            <PolicySubsection id="website-photos" title="Photos (Wikimedia Commons, Flickr and Unsplash)">
               <p>
-                Place photos load directly from Wikimedia Commons, run by the Wikimedia Foundation (USA), and a few from Flickr, run by SmugMug, Inc. (USA). They load automatically when you open a city, a place or the list of cities.
+                Place photos load directly from Wikimedia Commons, run by the Wikimedia Foundation (USA), and a few from Flickr, run by SmugMug, Inc. (USA), and Unsplash, run by Unsplash Inc. (Canada). They load automatically when you open a city, a place or the list of cities.
               </p>
               <p>
-                These services receive your IP address, browser information and which photos were loaded, which reveals the city you are viewing. They process this data as independent controllers under their own policies: <ExternalLink href="https://foundation.wikimedia.org/wiki/Policy:Privacy_policy">Wikimedia Foundation privacy policy</ExternalLink>, <ExternalLink href="https://www.flickr.com/help/privacy">Flickr privacy policy</ExternalLink>.
+                These services receive your IP address, browser information and which photos were loaded, which reveals the city you are viewing. They process this data as independent controllers under their own policies: <ExternalLink href="https://foundation.wikimedia.org/wiki/Policy:Privacy_policy">Wikimedia Foundation privacy policy</ExternalLink>, <ExternalLink href="https://www.flickr.com/help/privacy">Flickr privacy policy</ExternalLink>, <ExternalLink href="https://unsplash.com/privacy">Unsplash privacy policy</ExternalLink>.
               </p>
             </PolicySubsection>
 
@@ -266,12 +266,12 @@ export function PrivacyPolicyPage() {
               </p>
             </PolicySubsection>
 
-            <PolicySubsection id="app-photos" title="Photos (Wikimedia Commons and Flickr)">
+            <PolicySubsection id="app-photos" title="Photos (Wikimedia Commons, Flickr and Unsplash)">
               <p>
-                Place photos load directly from Wikimedia Commons (Wikimedia Foundation, USA) and a few from Flickr (SmugMug, Inc., USA), automatically when you open a city, a place or the list of cities. These services receive your IP address, the app's name and version and which photos were loaded, which reveals the city you are viewing. One Flickr photo is in Barcelona, the default city, so Flickr receives a request on almost every new installation.
+                Place photos load directly from Wikimedia Commons (Wikimedia Foundation, USA) and a few from Flickr (SmugMug, Inc., USA) and Unsplash (Unsplash Inc., Canada), automatically when you open a city, a place or the list of cities. These services receive your IP address, the app's name and version and which photos were loaded, which reveals the city you are viewing. One Flickr photo is in Barcelona, the default city, so Flickr receives a request on almost every new installation.
               </p>
               <p>
-                The app neither stores nor sends back their cookies. Both services process this data as independent controllers under their own policies: <ExternalLink href="https://foundation.wikimedia.org/wiki/Policy:Privacy_policy">Wikimedia Foundation privacy policy</ExternalLink>, <ExternalLink href="https://www.flickr.com/help/privacy">Flickr privacy policy</ExternalLink>. Photos cannot be shown without these requests.
+                The app neither stores nor sends back their cookies. These services process this data as independent controllers under their own policies: <ExternalLink href="https://foundation.wikimedia.org/wiki/Policy:Privacy_policy">Wikimedia Foundation privacy policy</ExternalLink>, <ExternalLink href="https://www.flickr.com/help/privacy">Flickr privacy policy</ExternalLink>, <ExternalLink href="https://unsplash.com/privacy">Unsplash privacy policy</ExternalLink>. Photos cannot be shown without these requests.
               </p>
             </PolicySubsection>
 
@@ -305,6 +305,7 @@ export function PrivacyPolicyPage() {
                 ['Mapbox, Inc.', 'Map and telemetry', 'Processor and, for telemetry, independent controller', 'USA', 'EU-US Data Privacy Framework'],
                 ['Wikimedia Foundation, Inc.', 'Place photos', 'Independent controller', 'USA', 'Your device connects directly; see its policy'],
                 ['SmugMug, Inc. (Flickr)', 'Place photos', 'Independent controller', 'USA', 'Your device connects directly; see its policy'],
+                ['Unsplash Inc.', 'Place photos', 'Independent controller', 'Canada', 'Your device connects directly; see its policy'],
                 ['Google LLC (Android app only)', 'Location services on your phone', 'Independent controller', 'USA', 'EU-US Data Privacy Framework']
               ]}
             />
@@ -332,7 +333,7 @@ export function PrivacyPolicyPage() {
                 ['Records of privacy requests', '3 years, to show we handled them'],
                 ['Data on your device', 'Until you clear site data or uninstall the app'],
                 ['Data held by Mapbox', 'IP addresses up to 30 days; identifiers separated from location within 24 hours'],
-                ['Data held by Wikimedia, Flickr and Google', 'As set out in their policies']
+                ['Data held by Wikimedia, Flickr, Unsplash and Google', 'As set out in their policies']
               ]}
             />
           </PolicySection>
@@ -376,7 +377,7 @@ export function PrivacyPolicyPage() {
 
           <PolicySection id="security">
             <p>
-              All connections between Archi2go and our server, Mapbox, Wikimedia and Flickr use encrypted HTTPS. We keep as little data as possible: no accounts, and server logs are deleted after 14 days.
+              All connections between Archi2go and our server, Mapbox, Wikimedia, Flickr and Unsplash use encrypted HTTPS. We keep as little data as possible: no accounts, and server logs are deleted after 14 days.
             </p>
           </PolicySection>
 
