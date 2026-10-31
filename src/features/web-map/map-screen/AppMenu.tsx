@@ -291,7 +291,7 @@ export function ContactDialog({ onClose }: { onClose: () => void }) {
     const nextErrors = {
       email: validateEmail(email),
       comment: validateComment(comment),
-      consent: consent ? undefined : 'Please confirm that we may use your details to reply.'
+      consent: consent ? undefined : 'Please confirm that you have read the Privacy policy.'
     };
     setErrors(nextErrors);
     if (nextErrors.email) {
@@ -462,7 +462,7 @@ export function ContactDialog({ onClose }: { onClose: () => void }) {
               }}
             />
             <span>
-              I agree that time2map may use these details to respond to my inquiry. <a href={privacyHref}>Privacy policy</a>.
+              I have read the <a href={privacyHref}>Privacy policy</a>.
             </span>
           </label>
           <span
