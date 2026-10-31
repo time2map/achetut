@@ -80,11 +80,19 @@ function ExternalLink({ href, children }: { href: string; children: ReactNode })
 
 const contactEmail = <a href="mailto:contact@time2map.com">contact@time2map.com</a>;
 
+// The Archi2go app opens this page with ?from=app; its own link brings it forward as the user left it.
+const APP_RETURN_URL = 'achetut://back';
+
 export function PrivacyPolicyPage() {
-  const requestedReturnPath = new URLSearchParams(window.location.search).get('return');
+  const query = new URLSearchParams(window.location.search);
+  const fromApp = query.get('from') === 'app';
+  const requestedReturnPath = query.get('return');
   const returnPath =
     requestedReturnPath?.startsWith('/') && !requestedReturnPath.startsWith('//') ? requestedReturnPath : '/';
   const returnsToContact = new URL(returnPath, window.location.origin).searchParams.get('contact') === '1';
+  const backHref = fromApp ? APP_RETURN_URL : returnPath;
+  const backText = fromApp ? 'Back to the app' : returnsToContact ? 'Back to contact form' : 'Back to the map';
+  const brandLabel = fromApp ? 'Back to the Archi2go app' : returnsToContact ? 'Back to contact form' : 'Back to Archi2go';
 
   // The page renders after the browser has looked for the #fragment, so links such as /privacy#app land here.
   useEffect(() => {
@@ -103,12 +111,12 @@ export function PrivacyPolicyPage() {
     <main className="privacy-page" id="main-content">
       <header className="privacy-header">
         <div className="privacy-header-inner">
-          <a className="privacy-brand" href={returnPath} aria-label={returnsToContact ? 'Back to contact form' : 'Back to Archi2go'}>
+          <a className="privacy-brand" href={backHref} aria-label={brandLabel}>
             <Archi2goLogo />
           </a>
-          <a className="privacy-back" href={returnPath}>
+          <a className="privacy-back" href={backHref}>
             <span aria-hidden="true">←</span>
-            {returnsToContact ? 'Back to contact form' : 'Back to the map'}
+            {backText}
           </a>
         </div>
       </header>
